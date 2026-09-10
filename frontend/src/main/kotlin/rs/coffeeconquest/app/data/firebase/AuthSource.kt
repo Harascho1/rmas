@@ -9,16 +9,7 @@ import rs.coffeeconquest.shared.model.Role
 import rs.coffeeconquest.shared.rules.Time
 import rs.coffeeconquest.shared.rules.Validation
 
-/**
- * Accounts. Firebase Auth owns the credentials and the session; the `users`
- * collection owns everything the game needs (role, points, streak).
- *
- * Firebase Auth only knows email + password, but the app has always let people
- * sign in with a username, so `usernames/{usernameLower}` doubles as a uniqueness
- * index and a username -> email lookup.
- */
 class AuthSource(private val social: SocialSource) {
-
     suspend fun register(request: RegisterRequest): UserProfile {
         Validation.username(request.username)?.let { throw AppException(it) }
         Validation.email(request.email)?.let { throw AppException(it) }
@@ -69,7 +60,6 @@ class AuthSource(private val social: SocialSource) {
             "createdAt" to now,
         )
 
-        // Both writes land together, so a username can never be reserved without a profile.
         Fire.db.batch().apply {
             set(Fire.user(uid), profile)
             set(Fire.usernames().document(usernameLower), mapOf("uid" to uid, "email" to email))
@@ -107,7 +97,9 @@ class AuthSource(private val social: SocialSource) {
 
     suspend fun updateProfile(request: UpdateProfileRequest): UserProfile {
         val uid = Fire.requireUid()
-        request.displayName?.let { Validation.displayName(it)?.let { msg -> throw AppException(msg) } }
+        request.displayName?.let {
+            Validation.displayName(it)?.let { msg -> throw AppException(msg) }
+        }
 
         val updates = buildMap<String, Any?> {
             request.displayName?.let { put("displayName", it.trim()) }

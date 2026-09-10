@@ -13,7 +13,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 data class LatLon(val latitude: Double, val longitude: Double)
 
-/** A position together with the provider that produced it. */
 data class LocationFix(
     val latitude: Double,
     val longitude: Double,
@@ -22,24 +21,12 @@ data class LocationFix(
 ) {
     val position: LatLon get() = LatLon(latitude, longitude)
 
-    /** Which of Android's two location providers answered. */
     enum class Source(val label: String) {
-        /** Satellite fix: accurate to a few metres, needs sky and takes longer. */
         GPS("GPS"),
-
-        /** Derived from cell towers and Wi-Fi: fast and works indoors, far coarser. */
         NETWORK("mreza"),
     }
 }
 
-/**
- * Reads the device position from **both** of Android's providers.
- *
- * GPS and network answer different questions: the network provider replies in
- * about a second and works indoors but can be hundreds of metres out, while GPS
- * is accurate enough for the 150 m check-in rule but may never answer inside a
- * cafe. So both are asked at once and GPS wins when it arrives in time.
- */
 class LocationProvider(private val context: Context) {
 
     private val manager: LocationManager
@@ -64,23 +51,12 @@ class LocationProvider(private val context: Context) {
     private fun isEnabled(provider: String): Boolean =
         runCatching { manager.isProviderEnabled(provider) }.getOrDefault(false)
 
-    /**
-     * Listens to every available provider and returns the best fix it can get
-     * within [timeoutMs].
-     *
-     * A GPS fix ends the wait immediately. A network fix is held for
-     * [gpsGraceMs] first, in case GPS is about to answer with something better.
-     * If nothing arrives at all, the last known position is used rather than
-     * leaving the caller with nothing.
-     */
     suspend fun current(timeoutMs: Long = 10_000, gpsGraceMs: Long = 4_000): LocationFix? {
         if (!hasPermission()) return null
 
         val fixes = Channel<LocationFix>(Channel.UNLIMITED)
         val listeners = mutableListOf<LocationListener>()
 
-        // Fine location covers both providers; with only coarse granted, GPS is
-        // unavailable and the network provider answers on its own.
         val requested = buildList {
             if (hasFine() && isEnabled(LocationManager.GPS_PROVIDER)) {
                 add(LocationManager.GPS_PROVIDER to LocationFix.Source.GPS)
@@ -114,7 +90,6 @@ class LocationProvider(private val context: Context) {
             val first = withTimeoutOrNull(timeoutMs) { fixes.receive() } ?: return lastKnown()
             if (first.source == LocationFix.Source.GPS) return first
 
-            // The first answer came from the network; wait a moment for GPS.
             val better = withTimeoutOrNull(gpsGraceMs) { fixes.receive() }
             return better ?: first
         } finally {
@@ -125,7 +100,6 @@ class LocationProvider(private val context: Context) {
         }
     }
 
-    /** The freshest cached position from either provider - instant, possibly stale. */
     fun lastKnown(): LocationFix? {
         if (!hasPermission()) return null
         val candidates = buildList {
@@ -134,7 +108,15 @@ class LocationProvider(private val context: Context) {
         }
         return candidates
             .mapNotNull { (provider, source) ->
-                runCatching { manager.getLastKnownLocation(provider) }.getOrNull()?.toFix(source)
+                try {
+                    manager.getLastKnownLocation(provider)?.toFix(source)
+                } catch (_: SecurityException) {
+                    // Permission was revoked between the check and the read.
+                    null
+                } catch (_: IllegalArgumentException) {
+                    // Device has no such provider.
+                    null
+                }
             }
             .minByOrNull { it.accuracyMeters ?: Float.MAX_VALUE }
     }
@@ -147,7 +129,6 @@ class LocationProvider(private val context: Context) {
     )
 
     companion object {
-        /** Where the map opens when there is no fix yet: Republic Square, Belgrade. */
         val DEFAULT = LatLon(44.8167, 20.4600)
     }
 }

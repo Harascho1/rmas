@@ -4,6 +4,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import rs.coffeeconquest.app.data.firebase.CafeSource.Companion.NO_SUCH_AUTHOR
 import rs.coffeeconquest.shared.dto.Cafe
 import rs.coffeeconquest.shared.dto.CafeConqueror
 import rs.coffeeconquest.shared.dto.CafeFilter
@@ -20,16 +21,7 @@ import rs.coffeeconquest.shared.rules.Geo
 import rs.coffeeconquest.shared.rules.Time
 import rs.coffeeconquest.shared.rules.Validation
 
-/**
- * Cafes - the POIs on the map - plus their reviews and the owner dashboard.
- *
- * Firestore indexes one range filter per query, so a radius search filters on
- * latitude in the query and finishes the job on the device: longitude window
- * first, then an exact haversine. The bounding box keeps the fetched set small,
- * which is the same trick the SQL version used.
- */
 class CafeSource(private val challenges: ChallengeSource) {
-
     companion object {
         /** Ceiling on documents pulled for one map screen, however narrow the filter. */
         const val MAX_FETCH = 300L
@@ -60,9 +52,11 @@ class CafeSource(private val challenges: ChallengeSource) {
                     .fetch()
                     .filter { it.double("longitude") in box.minLon..box.maxLon }
             }
+
             !city.isNullOrBlank() -> base.whereEqualTo("cityLower", city.lowercase())
                 .limit(fetchLimit)
                 .fetch()
+
             else -> base.limit(fetchLimit).fetch()
         }
 
@@ -84,9 +78,19 @@ class CafeSource(private val challenges: ChallengeSource) {
                     doc.str("name").orEmpty().lowercase().contains(needle) ||
                     doc.str("address").orEmpty().lowercase().contains(needle)
             }
-            .filter { doc -> city.isNullOrBlank() || city.equals(doc.str("city"), ignoreCase = true) }
+            .filter { doc ->
+                city.isNullOrBlank() || city.equals(
+                    doc.str("city"),
+                    ignoreCase = true
+                )
+            }
             // tip
-            .filter { doc -> filter.type == null || doc.enum("type", CafeType.KAFIC) == filter.type }
+            .filter { doc ->
+                filter.type == null || doc.enum(
+                    "type",
+                    CafeType.KAFIC
+                ) == filter.type
+            }
             // atributi - every requested tag must be present
             .filter { doc -> doc.strings("tags").containsAll(filter.attributes) }
             // autor
@@ -102,7 +106,8 @@ class CafeSource(private val challenges: ChallengeSource) {
             }
             .filter { cafe -> filter.minRating == null || cafe.averageRating >= filter.minRating!! }
             .filter { cafe ->
-                latitude == null || longitude == null || (cafe.distanceMeters ?: 0.0) <= radiusMeters
+                latitude == null || longitude == null || (cafe.distanceMeters
+                    ?: 0.0) <= radiusMeters
             }
             .map { cafe -> cafe.copy(activeChallenges = active.filter { it.appliesTo(cafe) }) }
             .sortedBy { it.distanceMeters ?: Double.MAX_VALUE }
@@ -259,7 +264,11 @@ class CafeSource(private val challenges: ChallengeSource) {
     }
 
     /** Throws unless [actor] may manage this cafe. Mirrors the Firestore rules. */
-    suspend fun assertCanManage(cafeId: String, actor: DocumentSnapshot, staffAllowed: Boolean = true) {
+    suspend fun assertCanManage(
+        cafeId: String,
+        actor: DocumentSnapshot,
+        staffAllowed: Boolean = true
+    ) {
         val role = actor.enum("role", Role.HUNTER)
         if (role == Role.ADMIN) return
 
@@ -284,7 +293,12 @@ class CafeSource(private val challenges: ChallengeSource) {
      * One review per user per cafe: the document id is the author's uid, so
      * posting again edits the existing review instead of adding a second one.
      */
-    suspend fun upsertReview(cafeId: String, author: DocumentSnapshot, rating: Int, comment: String?): Review {
+    suspend fun upsertReview(
+        cafeId: String,
+        author: DocumentSnapshot,
+        rating: Int,
+        comment: String?
+    ): Review {
         Validation.rating(rating)?.let { throw AppException(it) }
         Validation.reviewComment(comment)?.let { throw AppException(it) }
 
@@ -321,14 +335,23 @@ class CafeSource(private val challenges: ChallengeSource) {
                 )
                 update(Fire.user(author.id), "reviewCount", FieldValue.increment(1))
             } else {
-                update(cafeRef, "ratingSum", FieldValue.increment((rating - previousRating).toLong()))
+                update(
+                    cafeRef,
+                    "ratingSum",
+                    FieldValue.increment((rating - previousRating).toLong())
+                )
             }
         }.commit().await()
 
         return reviewRef.fetch().toReview()
     }
 
-    suspend fun replyToReview(cafeId: String, reviewId: String, reply: String, actor: DocumentSnapshot): Review {
+    suspend fun replyToReview(
+        cafeId: String,
+        reviewId: String,
+        reply: String,
+        actor: DocumentSnapshot
+    ): Review {
         assertCanManage(cafeId, actor, staffAllowed = false)
 
         val ref = Fire.reviews(cafeId).document(reviewId)
@@ -379,7 +402,8 @@ class CafeSource(private val challenges: ChallengeSource) {
             checkInsLast7Days = recent.count { it.long("createdAt") >= last7From },
             checkInsLast30Days = recent.size,
             uniqueVisitors = visitors.size,
-            averageRating = if (reviewCount > 0) reviews.sumOf { it.int("rating") }.toDouble() / reviewCount else 0.0,
+            averageRating = if (reviewCount > 0) reviews.sumOf { it.int("rating") }
+                .toDouble() / reviewCount else 0.0,
             reviewCount = reviewCount,
             unansweredReviews = reviews.count { it.str("ownerReply") == null },
             dailyCheckIns = daily,

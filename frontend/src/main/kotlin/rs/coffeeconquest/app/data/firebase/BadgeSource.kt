@@ -7,7 +7,6 @@ import rs.coffeeconquest.shared.rules.Time
 
 /** Evaluates the badge catalogue after a check-in and awards what is newly earned. */
 class BadgeSource {
-
     suspend fun evaluateAfterCheckIn(
         userId: String,
         checkInHour: Int,
@@ -29,10 +28,6 @@ class BadgeSource {
         return award(userId, candidates)
     }
 
-    /**
-     * Grants any of [codes] the user does not already hold. The badge code is the
-     * document id, so "already holds it" is a single read and re-awarding is a no-op.
-     */
     suspend fun award(userId: String, codes: List<String>): List<EarnedBadge> {
         if (codes.isEmpty()) return emptyList()
 

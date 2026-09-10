@@ -20,7 +20,6 @@ data class ProfileUiState(
     val followBusy: Boolean = false,
     val message: String? = null,
 ) {
-    /** Full badge catalogue with an earned flag, so the profile can show what is still missing. */
     val badgeBoard: List<BadgeSlot>
         get() {
             val earned = (stats as? UiState.Ready)?.data?.badges?.associateBy { it.code }.orEmpty()
@@ -47,7 +46,6 @@ data class BadgeSlot(
 }
 
 class ProfileViewModel : ViewModel() {
-
     private val repository = AppContainer.repository
 
     private val _state = MutableStateFlow(ProfileUiState())

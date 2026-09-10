@@ -10,28 +10,11 @@ import kotlinx.coroutines.withContext
 import rs.coffeeconquest.shared.rules.Time
 import java.io.ByteArrayOutputStream
 
-/**
- * Photos, stored as documents in Firestore rather than in Cloud Storage.
- *
- * Firebase now puts Cloud Storage behind a billing account, so photos live in a
- * `photos/{id}` collection as base64 instead. A Firestore document caps out at
- * 1 MiB and base64 costs a third on top, so every image is downscaled below
- * [MAX_IMAGE_BYTES] before it is written - which is well within what a phone
- * camera shot compresses to anyway.
- *
- * The trade is real: images cost document reads instead of bandwidth, and they
- * cannot be huge. Keeping them in their own collection is what makes it work -
- * a cafe or check-in document carries only the photo *id*, so listing a
- * screenful of cafes never drags their images along.
- */
 class PhotoSource {
-
-    /** Decoded images kept in memory, so scrolling a list re-reads nothing. */
     private val cache = object : LruCache<String, ByteArray>(CACHE_BYTES) {
         override fun sizeOf(key: String, value: ByteArray): Int = value.size
     }
 
-    /** Stores an image and returns the id to put on a cafe, check-in or profile. */
     suspend fun upload(bytes: ByteArray, fileName: String): String {
         Fire.requireUid()
         if (bytes.isEmpty()) throw AppException("Fajl je prazan.")
@@ -54,7 +37,6 @@ class PhotoSource {
         return document.id
     }
 
-    /** Raw JPEG bytes for [photoId], or null when it is missing. */
     suspend fun load(photoId: String): ByteArray? {
         cache.get(photoId)?.let { return it }
 
@@ -68,10 +50,6 @@ class PhotoSource {
         return bytes
     }
 
-    /**
-     * Compresses until the image fits [MAX_IMAGE_BYTES]: quality first, then
-     * halving the dimensions once quality alone stops helping.
-     */
     private fun shrink(input: ByteArray): ByteArray {
         if (input.size <= MAX_IMAGE_BYTES) return input
 
@@ -101,12 +79,7 @@ class PhotoSource {
     }
 
     companion object {
-        /**
-         * Firestore allows 1 MiB per document and base64 adds about a third, so
-         * this leaves comfortable room for the other fields.
-         */
         const val MAX_IMAGE_BYTES = 500_000
-
         private const val CACHE_BYTES = 8 * 1024 * 1024
     }
 }

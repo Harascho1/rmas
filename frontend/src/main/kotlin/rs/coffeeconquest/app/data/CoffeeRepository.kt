@@ -35,13 +35,6 @@ import rs.coffeeconquest.shared.dto.UserStats
 import rs.coffeeconquest.shared.model.LeaderboardScope
 import rs.coffeeconquest.shared.model.Role
 
-/**
- * The app's single door to Firebase. Every screen talks to this, never to
- * Firestore directly, so the data model stays in one place.
- *
- * The method list is deliberately the same one the old REST client exposed -
- * only the ids changed from `Long` to Firestore's `String` document ids.
- */
 class CoffeeRepository(
     private val auth: AuthSource,
     private val cafeSource: CafeSource,
@@ -52,7 +45,6 @@ class CoffeeRepository(
     private val admin: AdminSource,
 ) {
 
-    /** The signed-in user's document, needed wherever a write depends on their role. */
     private suspend fun actor(): DocumentSnapshot {
         val snapshot = Fire.user(Fire.requireUid()).fetch()
         if (!snapshot.exists()) throw AppException("Korisnik ne postoji.")
@@ -68,7 +60,8 @@ class CoffeeRepository(
 
     suspend fun me(): UserProfile = auth.me()
 
-    suspend fun updateProfile(request: UpdateProfileRequest): UserProfile = auth.updateProfile(request)
+    suspend fun updateProfile(request: UpdateProfileRequest): UserProfile =
+        auth.updateProfile(request)
 
     fun logout() = auth.logout()
 
@@ -106,14 +99,16 @@ class CoffeeRepository(
     suspend fun replyToReview(cafeId: String, reviewId: String, reply: String): Review =
         cafeSource.replyToReview(cafeId, reviewId, reply, actor())
 
-    suspend fun cafeCheckIns(cafeId: String): List<CheckIn> = checkInSource.byCafe(cafeId, limit = 30)
+    suspend fun cafeCheckIns(cafeId: String): List<CheckIn> =
+        checkInSource.byCafe(cafeId, limit = 30)
 
     suspend fun assignStaff(cafeId: String, userId: String) =
         cafeSource.assignStaff(cafeId, userId, actor())
 
     // ------------------------------------------------------------- check-ins
 
-    suspend fun checkIn(request: CreateCheckInRequest): CheckInResult = checkInSource.create(request)
+    suspend fun checkIn(request: CreateCheckInRequest): CheckInResult =
+        checkInSource.create(request)
 
     suspend fun myCheckIns(limit: Int = 30): List<CheckIn> =
         checkInSource.byUser(Fire.requireUid(), limit)
@@ -121,7 +116,8 @@ class CoffeeRepository(
     suspend fun userCheckIns(userId: String, limit: Int = 30): List<CheckIn> =
         checkInSource.byUser(userId, limit)
 
-    suspend fun qrToken(cafeId: String): QrTokenResponse = checkInSource.issueQrToken(cafeId, actor())
+    suspend fun qrToken(cafeId: String): QrTokenResponse =
+        checkInSource.issueQrToken(cafeId, actor())
 
     // ----------------------------------------------------------------- media
 
@@ -152,7 +148,8 @@ class CoffeeRepository(
 
     suspend fun searchUsers(query: String): List<UserProfile> = social.search(query)
 
-    suspend fun follow(userId: String, follow: Boolean): FollowResponse = social.follow(userId, follow)
+    suspend fun follow(userId: String, follow: Boolean): FollowResponse =
+        social.follow(userId, follow)
 
     // ------------------------------------------------------------ challenges
 
@@ -174,10 +171,6 @@ class CoffeeRepository(
         challengeSource.delete(id, actor, isAdmin = actor.enum("role", Role.HUNTER) == Role.ADMIN)
     }
 
-    /**
-     * A city-wide challenge is the city champion's prize - admins may always do it,
-     * and nobody else can hand the title to themselves.
-     */
     private suspend fun assertCanBoostCity(city: String, actor: DocumentSnapshot) {
         if (actor.enum("role", Role.HUNTER) == Role.ADMIN) return
         if (!social.isCityChampion(actor.id, city)) {

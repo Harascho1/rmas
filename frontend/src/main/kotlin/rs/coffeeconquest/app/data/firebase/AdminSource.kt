@@ -5,12 +5,7 @@ import kotlinx.coroutines.tasks.await
 import rs.coffeeconquest.shared.dto.UserProfile
 import rs.coffeeconquest.shared.model.Role
 
-/**
- * Moderation. Every call here is also gated by the Firestore rules, which only
- * let a document whose `role` is ADMIN touch other people's user documents.
- */
 class AdminSource {
-
     suspend fun allUsers(limit: Int = 100): List<UserProfile> =
         Fire.users()
             .orderBy("createdAt", Query.Direction.DESCENDING)

@@ -20,22 +20,10 @@ import rs.coffeeconquest.shared.model.LeaderboardScope
 import rs.coffeeconquest.shared.rules.ScoreRules
 import rs.coffeeconquest.shared.rules.Time
 
-/**
- * Leaderboards, the activity feed, profiles and following.
- *
- * All-time boards read the `points` counter straight off `users`, which is one
- * indexed query. The weekly board has to add up check-ins instead - Firestore
- * cannot group-by - so it scans at most [WEEKLY_SCAN_LIMIT] recent check-ins and
- * sums them on the device. That is exact for a class-sized dataset and honest
- * about where it would stop being exact.
- */
 class SocialSource {
-
     companion object {
         const val WEEKLY_SCAN_LIMIT = 500L
     }
-
-    // ----------------------------------------------------------- leaderboard
 
     suspend fun leaderboard(
         scope: LeaderboardScope,
@@ -63,7 +51,6 @@ class SocialSource {
         )
     }
 
-    /** Lifetime points, straight off the denormalised counter on `users`. */
     private suspend fun allTime(
         scope: LeaderboardScope,
         city: String?,
@@ -76,6 +63,7 @@ class SocialSource {
                 if (ids.isEmpty()) return emptyList()
                 usersByIds(ids).sortedByDescending { it.int("points") }
             }
+
             LeaderboardScope.CITY -> {
                 if (city.isNullOrBlank()) return emptyList()
                 Fire.users()
@@ -85,6 +73,7 @@ class SocialSource {
                     .limit(limit.toLong())
                     .fetch()
             }
+
             LeaderboardScope.GLOBAL -> Fire.users()
                 .whereEqualTo("isBanned", false)
                 .orderBy("points", Query.Direction.DESCENDING)
@@ -97,7 +86,6 @@ class SocialSource {
             .mapIndexed { index, doc -> doc.toEntry(index + 1, doc.int("points"), viewerId) }
     }
 
-    /** Points earned inside a time window - the weekly city champion race. */
     private suspend fun windowed(
         scope: LeaderboardScope,
         city: String?,
@@ -124,7 +112,6 @@ class SocialSource {
             else -> null
         }
 
-        // Take a generous slice before the city/friend filter so the page still fills up.
         val ranked = pointsByUser.entries
             .filter { eligible == null || it.key in eligible }
             .sortedByDescending { it.value }
@@ -146,7 +133,6 @@ class SocialSource {
             .mapIndexed { index, (doc, points) -> doc.toEntry(index + 1, points, viewerId) }
     }
 
-    /** The viewer's own row, even when they sit far below the returned page. */
     private suspend fun myRow(viewerId: String, since: Long?): LeaderboardEntry? {
         val doc = Fire.user(viewerId).fetch()
         if (!doc.exists()) return null
@@ -162,7 +148,6 @@ class SocialSource {
                 .sumOf { it.int("pointsAwarded") }
         }
 
-        // Rank is counted separately, because the viewer may be far below the page.
         val ahead = Fire.users()
             .whereEqualTo("isBanned", false)
             .whereGreaterThan("points", points)
@@ -175,10 +160,6 @@ class SocialSource {
         return doc.toEntry(ahead + 1, points, viewerId)
     }
 
-    /**
-     * Whoever leads their city's weekly board wears the crown. Recomputed on read,
-     * which is exact and fast enough at this scale - no scheduled job needed.
-     */
     suspend fun cityChampion(city: String): CityChampion {
         val weekStart = Time.startOfWeekMs()
         val board = windowed(LeaderboardScope.CITY, city, Fire.uid, 1, weekStart)
@@ -190,20 +171,19 @@ class SocialSource {
         return runCatching { cityChampion(city).user?.userId == userId }.getOrDefault(false)
     }
 
-    private fun DocumentSnapshot.toEntry(rank: Int, points: Int, viewerId: String?) = LeaderboardEntry(
-        rank = rank,
-        userId = id,
-        username = str("username").orEmpty(),
-        displayName = str("displayName").orEmpty(),
-        avatarPhotoId = str("avatarPhotoId"),
-        points = points,
-        level = ScoreRules.levelFor(points),
-        checkInCount = int("checkInCount"),
-        city = str("city"),
-        isMe = id == viewerId,
-    )
-
-    // ------------------------------------------------------------------ feed
+    private fun DocumentSnapshot.toEntry(rank: Int, points: Int, viewerId: String?) =
+        LeaderboardEntry(
+            rank = rank,
+            userId = id,
+            username = str("username").orEmpty(),
+            displayName = str("displayName").orEmpty(),
+            avatarPhotoId = str("avatarPhotoId"),
+            points = points,
+            level = ScoreRules.levelFor(points),
+            checkInCount = int("checkInCount"),
+            city = str("city"),
+            isMe = id == viewerId,
+        )
 
     suspend fun feed(followingOnly: Boolean, limit: Int): List<FeedItem> {
         if (!followingOnly) {
@@ -217,7 +197,6 @@ class SocialSource {
         val actorIds = friendIds(Fire.uid)
         if (actorIds.isEmpty()) return emptyList()
 
-        // `whereIn` caps at 30 values, so a long following list is queried in chunks.
         return actorIds.chunked(WHERE_IN_LIMIT)
             .flatMap { chunk ->
                 Fire.feed()
@@ -231,7 +210,6 @@ class SocialSource {
             .take(limit)
     }
 
-    /** Appends to the activity stream: "Marko je upravo osvojio Kafeteriju X". */
     suspend fun record(
         type: FeedEventType,
         actor: DocumentSnapshot,
@@ -257,8 +235,6 @@ class SocialSource {
         ).await()
     }
 
-    // -------------------------------------------------------------- profiles
-
     suspend fun user(userId: String): UserProfile {
         val doc = Fire.user(userId).fetch()
         if (!doc.exists()) throw AppException("Korisnik ne postoji.")
@@ -278,18 +254,12 @@ class SocialSource {
             .fetch()
             .mapNotNull { it.toEarnedBadge() }
 
-    /** The user's personal conquest map: every cafe they ever scored at. */
     suspend fun conquered(userId: String): List<ConqueredCafe> =
         Fire.conquered(userId)
             .orderBy("lastVisitAt", Query.Direction.DESCENDING)
             .fetch()
             .map { it.toConqueredCafe(isTopVisitor = it.bool("isTopVisitor")) }
 
-    /**
-     * Firestore has no `LIKE`, so this is a prefix search on the lowercased
-     * username - the \uf8ff sentinel sorts above any normal
-     * character, so startAt..endAt spans exactly the keys with that prefix.
-     */
     suspend fun search(query: String, limit: Int = 20): List<UserProfile> {
         val needle = query.trim().lowercase()
         if (needle.isEmpty()) return emptyList()
@@ -301,8 +271,6 @@ class SocialSource {
             .fetch()
             .map { it.toUserProfile() }
     }
-
-    // ------------------------------------------------------------- following
 
     suspend fun follow(followeeId: String, follow: Boolean): FollowResponse {
         val followerId = Fire.requireUid()
@@ -342,13 +310,11 @@ class SocialSource {
             .fetch()
             .mapNotNull { it.str("followeeId") }
 
-    /** Everyone the viewer follows, plus the viewer - what the "friends" scopes mean. */
     private suspend fun friendIds(viewerId: String?): List<String> {
         if (viewerId == null) return emptyList()
         return followingIds(viewerId) + viewerId
     }
 
-    /** Fetches user documents by id, in `whereIn`-sized chunks. */
     private suspend fun usersByIds(ids: List<String>): List<DocumentSnapshot> =
         ids.distinct().chunked(WHERE_IN_LIMIT).flatMap { chunk ->
             Fire.users().whereIn(FieldPath.documentId(), chunk).fetch()

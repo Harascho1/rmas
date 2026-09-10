@@ -18,22 +18,12 @@ import rs.coffeeconquest.shared.rules.Time
 import java.security.SecureRandom
 import java.util.Base64
 
-/**
- * The core game loop. Everything a check-in touches - anti-cheat, scoring,
- * streaks, badges, the feed - happens here so the rules live in one place.
- *
- * This is the part that used to run on the server. On Firebase the device does
- * the arithmetic and the Firestore rules decide what it is allowed to write, so
- * the checks below are the game's rules, not its security boundary: see
- * `firebase/firestore.rules` and the honesty note in the README.
- */
 class CheckInSource(
     private val cafes: CafeSource,
     private val challenges: ChallengeSource,
     private val badges: BadgeSource,
     private val social: SocialSource,
 ) {
-
     private val random = SecureRandom()
 
     suspend fun create(request: CreateCheckInRequest): CheckInResult {
@@ -73,7 +63,7 @@ class CheckInSource(
             challengeMultiplier = multiplier,
         )
 
-        val flagReason = flagReason(request, distance, overLimit, uid, cafeLat, cafeLon, now)
+        val flagReason = flagReason(request, overLimit, uid, cafeLat, cafeLon, now)
         val status = if (flagReason == null) CheckInStatus.VALID else CheckInStatus.FLAGGED
         // A flagged check-in still shows up, but it earns nothing until a moderator clears it.
         val awarded = if (status == CheckInStatus.VALID) breakdown.total else 0
@@ -156,7 +146,6 @@ class CheckInSource(
             update(Fire.cafe(request.cafeId), cafeUpdates)
         }.commit().await()
 
-        // An optional rating rides along with the check-in - one tap instead of two screens.
         if (request.rating != null) {
             cafes.upsertReview(request.cafeId, user, request.rating!!, request.comment)
         }
@@ -222,8 +211,11 @@ class CheckInSource(
             .fetch()
             .size
 
-    /** Returns the measured distance, and rejects GPS check-ins made from the couch. */
-    private fun verifyProximity(request: CreateCheckInRequest, cafeLat: Double, cafeLon: Double): Double? {
+    private fun verifyProximity(
+        request: CreateCheckInRequest,
+        cafeLat: Double,
+        cafeLon: Double
+    ): Double? {
         val lat = request.latitude
         val lon = request.longitude
         if (lat == null || lon == null) {
@@ -242,10 +234,8 @@ class CheckInSource(
         return distance
     }
 
-    /** Non-blocking suspicions: the check-in is stored but held for a moderator. */
     private suspend fun flagReason(
         request: CreateCheckInRequest,
-        distance: Double?,
         overDailyLimit: Boolean,
         uid: String,
         cafeLat: Double,
@@ -275,7 +265,6 @@ class CheckInSource(
         } else null
     }
 
-    /** The streak in days *after* counting today. */
     private fun nextStreak(user: DocumentSnapshot, now: Long): Int {
         val today = Time.epochDay(now)
         val last = user.longOrNull("lastCheckInDay")
@@ -290,11 +279,6 @@ class CheckInSource(
 
     // ------------------------------------------------------------- QR tokens
 
-    /**
-     * Staff generates a short-lived code to display; hunters scan it to prove they
-     * are inside. The token *is* the document id, and the rules allow reading one
-     * by id but never listing the collection, so a code cannot be guessed or farmed.
-     */
     suspend fun issueQrToken(cafeId: String, actor: DocumentSnapshot): QrTokenResponse {
         cafes.assertCanManage(cafeId, actor)
 
@@ -358,7 +342,6 @@ class CheckInSource(
             .fetch()
             .map { it.toCheckIn() }
 
-    /** Moderator decision: either take the points away, or hand them over. */
     suspend fun moderate(checkInId: String, valid: Boolean, reason: String): CheckIn {
         val ref = Fire.checkIns().document(checkInId)
         val doc = ref.fetch()
@@ -386,7 +369,11 @@ class CheckInSource(
                         "flagReason" to reason,
                     ),
                 )
-                update(Fire.user(userId), "points", FieldValue.increment((restored - current).toLong()))
+                update(
+                    Fire.user(userId),
+                    "points",
+                    FieldValue.increment((restored - current).toLong())
+                )
             }.commit().await()
         } else {
             Fire.db.batch().apply {
@@ -412,7 +399,6 @@ class CheckInSource(
     }
 
     companion object {
-        /** How long a displayed QR code stays valid - a screenshot is worthless after this. */
         const val QR_TOKEN_SECONDS = 300L
     }
 }

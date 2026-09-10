@@ -22,11 +22,6 @@ import rs.coffeeconquest.shared.rules.Geo
 import rs.coffeeconquest.shared.rules.ScoreRules
 import rs.coffeeconquest.shared.rules.Time
 
-/**
- * Firestore document -> DTO. The counters a screen needs (points, ratings, visits)
- * are stored on the document itself, so mapping never triggers another read.
- */
-
 fun DocumentSnapshot.toUserProfile(
     isFollowedByMe: Boolean = false,
     isCityChampion: Boolean = false,
@@ -157,12 +152,6 @@ fun DocumentSnapshot.toFeedItem() = FeedItem(
     createdAtEpochMs = long("createdAt"),
 )
 
-/**
- * The cafe's leading hunter, denormalised onto the cafe document itself.
- *
- * A map screenful is 50 cafes; ranking each one's `visitors` subcollection would
- * be 50 extra queries, so the check-in that takes the lead writes the winner here.
- */
 fun DocumentSnapshot.topVisitor(): CafeConqueror? {
     val userId = str("topVisitorId") ?: return null
     return CafeConqueror(
@@ -173,7 +162,6 @@ fun DocumentSnapshot.topVisitor(): CafeConqueror? {
     )
 }
 
-/** A document in `cafes/{id}/visitors` - one row per hunter who has been here. */
 fun DocumentSnapshot.toConqueror() = CafeConqueror(
     userId = id,
     username = str("username").orEmpty(),
@@ -181,7 +169,6 @@ fun DocumentSnapshot.toConqueror() = CafeConqueror(
     visits = int("visits"),
 )
 
-/** A document in `users/{uid}/conquered` - the mirror of [toConqueror]. */
 fun DocumentSnapshot.toConqueredCafe(isTopVisitor: Boolean) = ConqueredCafe(
     cafeId = id,
     name = str("name").orEmpty(),

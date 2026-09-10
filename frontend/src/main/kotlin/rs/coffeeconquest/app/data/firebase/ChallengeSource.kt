@@ -8,15 +8,7 @@ import rs.coffeeconquest.shared.dto.CreateChallengeRequest
 import rs.coffeeconquest.shared.model.ChallengeScope
 import rs.coffeeconquest.shared.rules.Time
 
-/**
- * Bonus challenges. A cafe owner boosts their own cafe; the current city champion
- * (or an admin) boosts a whole city - that is what makes the champion title worth chasing.
- *
- * "Running right now" is two range checks, so the query filters on `endsAt` -
- * the selective half - and checks `startsAt` on the device.
- */
 class ChallengeSource {
-
     companion object {
         const val MIN_MULTIPLIER = 1.5
         const val MAX_MULTIPLIER = 3.0
@@ -47,6 +39,7 @@ class ChallengeSource {
                 canManageCafe(cafeId)
                 cafeName = Fire.cafe(cafeId).fetch().str("name")
             }
+
             ChallengeScope.CITY -> {
                 val city = request.city?.trim()?.takeIf { it.isNotEmpty() }
                     ?: throw AppException("Nedostaje grad.")
@@ -85,10 +78,6 @@ class ChallengeSource {
         Fire.challenges().document(id).delete().await()
     }
 
-    /**
-     * Every challenge running right now, in one query. The map needs this for a
-     * whole screenful of pins at once, and a per-cafe lookup would be N+1 reads.
-     */
     suspend fun activeNow(): List<Challenge> {
         val now = Time.now()
         return Fire.challenges()
@@ -98,13 +87,14 @@ class ChallengeSource {
             .filter { it.startsAtEpochMs <= now }
     }
 
-    /** Challenges running right now for a cafe - its own plus its city's. */
     suspend fun activeFor(cafeId: String, city: String?): List<Challenge> =
         activeNow().filter { challenge ->
-            challenge.cafeId == cafeId || (city != null && challenge.city.equals(city, ignoreCase = true))
+            challenge.cafeId == cafeId || (city != null && challenge.city.equals(
+                city,
+                ignoreCase = true
+            ))
         }
 
-    /** The multiplier applied to a check-in: the strongest active challenge wins. */
     suspend fun multiplierFor(cafeId: String, city: String?): Pair<Double, Challenge?> {
         val best = activeFor(cafeId, city).maxByOrNull { it.multiplier }
         return (best?.multiplier ?: 1.0) to best
@@ -114,7 +104,9 @@ class ChallengeSource {
         val now = Time.now()
         val docs = when {
             cafeId != null -> Fire.challenges().whereEqualTo("cafeId", cafeId).fetch()
-            !city.isNullOrBlank() -> Fire.challenges().whereEqualTo("cityLower", city.lowercase()).fetch()
+            !city.isNullOrBlank() -> Fire.challenges().whereEqualTo("cityLower", city.lowercase())
+                .fetch()
+
             else -> Fire.challenges().orderBy("endsAt", Query.Direction.ASCENDING).fetch()
         }
         return docs.map { it.toChallenge() }

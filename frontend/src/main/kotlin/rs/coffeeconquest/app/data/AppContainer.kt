@@ -10,12 +10,7 @@ import rs.coffeeconquest.app.data.firebase.CheckInSource
 import rs.coffeeconquest.app.data.firebase.PhotoSource
 import rs.coffeeconquest.app.data.firebase.SocialSource
 
-/**
- * Manual dependency container. One repository, one set of Firebase data sources,
- * created once per process - a DI framework would be more machinery than this app needs.
- */
 object AppContainer {
-
     lateinit var repository: CoffeeRepository
         private set
 
