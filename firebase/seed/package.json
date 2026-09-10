@@ -1,0 +1,13 @@
+{
+  "name": "coffee-conquest-seed",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Creates the demo accounts and cafes in a Firebase project.",
+  "scripts": {
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1013762994204",
+    "project_id": "coffee-conquest",
+    "storage_bucket": "coffee-conquest.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013762994204:android:3994cc9ddc4be29ea12fd9",
+        "android_client_info": {
+          "package_name": "rs.coffeeconquest.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2t21mxCezOa_lKnF8At8JFARnut-_emo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

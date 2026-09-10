@@ -1,0 +1,12 @@
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.kotlin/
+*.log
+
+# Firebase secrets - never commit these.
+firebase/seed/serviceAccountKey.json
+firebase/seed/node_modules/
+.firebaserc

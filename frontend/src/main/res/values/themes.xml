@@ -1,0 +1,7 @@
+<resources>
+    <!-- Compose paints everything; this only needs to exist before setContent runs. -->
+    <style name="Theme.CoffeeConquest" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#4E342E</item>
+        <item name="android:navigationBarColor">#FFFBF7</item>
+    </style>
+</resources>

@@ -1,0 +1,103 @@
+package rs.coffeeconquest.app.ui.cafe
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import rs.coffeeconquest.app.data.AppContainer
+import rs.coffeeconquest.app.data.LocationProvider
+import rs.coffeeconquest.app.data.firebase.userMessage
+import rs.coffeeconquest.shared.dto.CreateCafeRequest
+import rs.coffeeconquest.shared.model.CafeType
+import rs.coffeeconquest.shared.rules.Validation
+
+data class AddCafeUiState(
+    val name: String = "",
+    val address: String = "",
+    val city: String = "",
+    val description: String = "",
+    val openingHours: String = "",
+    val type: CafeType = CafeType.KAFIC,
+    /** Picked from the suggested vocabulary, so the map filter can find them again. */
+    val attributes: List<String> = emptyList(),
+    val tags: String = "",
+    val latitude: Double = LocationProvider.DEFAULT.latitude,
+    val longitude: Double = LocationProvider.DEFAULT.longitude,
+    val submitting: Boolean = false,
+    val created: Boolean = false,
+    val error: String? = null,
+) {
+    val canSubmit: Boolean get() = !submitting && Validation.cafeName(name) == null
+}
+
+class AddCafeViewModel : ViewModel() {
+
+    private val repository = AppContainer.repository
+    private val location = AppContainer.location
+
+    private val _state = MutableStateFlow(AddCafeUiState())
+    val state: StateFlow<AddCafeUiState> = _state.asStateFlow()
+
+    fun onNameChange(value: String) = _state.update { it.copy(name = value, error = null) }
+    fun onAddressChange(value: String) = _state.update { it.copy(address = value) }
+    fun onCityChange(value: String) = _state.update { it.copy(city = value) }
+    fun onDescriptionChange(value: String) = _state.update { it.copy(description = value) }
+    fun onOpeningHoursChange(value: String) = _state.update { it.copy(openingHours = value) }
+    fun onTagsChange(value: String) = _state.update { it.copy(tags = value) }
+    fun onTypeChange(type: CafeType) = _state.update { it.copy(type = type) }
+
+    fun toggleAttribute(tag: String) = _state.update { current ->
+        val attributes =
+            if (tag in current.attributes) current.attributes - tag else current.attributes + tag
+        current.copy(attributes = attributes)
+    }
+
+    fun useCurrentLocation() {
+        viewModelScope.launch {
+            val fix = location.current()
+            if (fix == null) {
+                _state.update { it.copy(error = "Lokacija nije dostupna - proverite dozvolu i GPS.") }
+            } else {
+                _state.update { it.copy(latitude = fix.latitude, longitude = fix.longitude, error = null) }
+            }
+        }
+    }
+
+    fun submit() {
+        val current = _state.value
+        val invalid = Validation.cafeName(current.name)
+        if (invalid != null) {
+            _state.update { it.copy(error = invalid) }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(submitting = true, error = null) }
+            runCatching {
+                repository.createCafe(
+                    CreateCafeRequest(
+                        name = current.name.trim(),
+                        description = current.description.trim().takeIf { it.isNotEmpty() },
+                        address = current.address.trim().takeIf { it.isNotEmpty() },
+                        city = current.city.trim().takeIf { it.isNotEmpty() },
+                        latitude = current.latitude,
+                        longitude = current.longitude,
+                        type = current.type,
+                        openingHours = current.openingHours.trim().takeIf { it.isNotEmpty() },
+                        // Chip choices and anything typed by hand end up in one list.
+                        tags = (
+                            current.attributes +
+                                current.tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                            ).distinct(),
+                    ),
+                )
+            }.fold(
+                onSuccess = { _state.update { it.copy(submitting = false, created = true) } },
+                onFailure = { error -> _state.update { it.copy(submitting = false, error = error.userMessage()) } },
+            )
+        }
+    }
+}

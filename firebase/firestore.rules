@@ -1,0 +1,190 @@
+rules_version = '2';
+
+// Coffee Conquest - Firestore security rules.
+//
+// These rules are the app's real security boundary. The scoring and anti-cheat
+// checks run on the device (see CheckInSource), so anything that must not be
+// forged is pinned down here instead: nobody can hand themselves a role, unban
+// themselves, moderate someone else's check-in, or edit another hunter's profile.
+//
+// What these rules deliberately do NOT prevent: a modified client awarding
+// itself more points for its own check-in. Closing that needs Cloud Functions.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------- helpers
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myUid() {
+      return request.auth.uid;
+    }
+
+    function userData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function isAdmin() {
+      return signedIn() && userData(myUid()).role == 'ADMIN';
+    }
+
+    function notBanned() {
+      return signedIn() && userData(myUid()).isBanned == false;
+    }
+
+    function cafeData(cafeId) {
+      return get(/databases/$(database)/documents/cafes/$(cafeId)).data;
+    }
+
+    /** Owners and admins manage a cafe; staff may additionally issue QR codes. */
+    function managesCafe(cafeId) {
+      return signedIn() && (
+        isAdmin() ||
+        cafeData(cafeId).ownerId == myUid() ||
+        myUid() in cafeData(cafeId).staff
+      );
+    }
+
+    /** The set of fields a write actually changes. */
+    function touchedOnly(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // --------------------------------------------------------------- users
+
+    match /users/{uid} {
+      // Profiles are public inside the app: leaderboards and the feed need them.
+      allow read: if true;
+
+      // Registration: you may only create your own document, only as a hunter or
+      // owner, and only with a clean slate.
+      allow create: if signedIn()
+                    && uid == myUid()
+                    && request.resource.data.role in ['HUNTER', 'OWNER']
+                    && request.resource.data.points == 0
+                    && request.resource.data.isBanned == false;
+
+      allow update: if isAdmin()
+                    // Editing yourself: never your own role, ban state or identity.
+                    || (signedIn() && uid == myUid()
+                        && !request.resource.data.diff(resource.data).affectedKeys()
+                             .hasAny(['role', 'isBanned', 'banReason', 'username',
+                                      'usernameLower', 'email', 'createdAt']))
+                    // Someone following you nudges only your follower counter.
+                    || (notBanned() && touchedOnly(['followerCount']));
+
+      allow delete: if false;
+
+      // Badges and the personal conquest map belong to their owner.
+      match /badges/{code} {
+        allow read: if true;
+        allow write: if signedIn() && uid == myUid();
+      }
+
+      match /conquered/{cafeId} {
+        allow read: if true;
+        allow write: if signedIn() && uid == myUid();
+      }
+    }
+
+    /** Username -> email, so people can sign in with a username. Readable by
+        anyone because the lookup happens before there is a session. */
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.uid == myUid();
+      allow update, delete: if isAdmin();
+    }
+
+    // --------------------------------------------------------------- cafes
+
+    match /cafes/{cafeId} {
+      // The map works signed out.
+      allow read: if true;
+
+      // Hunters and owners propose; only an admin may create an approved cafe.
+      allow create: if notBanned()
+                    && request.resource.data.proposedById == myUid()
+                    && (request.resource.data.status == 'PENDING' || isAdmin());
+
+      allow update: if isAdmin()
+                    || managesCafe(cafeId)
+                    // A check-in or a review bumps the cafe's own counters.
+                    || (notBanned() && touchedOnly(['checkInCount', 'reviewCount', 'ratingSum',
+                                                    'topVisitorId', 'topVisitorUsername',
+                                                    'topVisitorDisplayName', 'topVisitorVisits']));
+
+      allow delete: if isAdmin();
+
+      match /reviews/{authorId} {
+        allow read: if true;
+        // Your own review, or the owner attaching a reply to it.
+        allow create: if notBanned() && authorId == myUid();
+        allow update: if (notBanned() && authorId == myUid()) || managesCafe(cafeId);
+        allow delete: if isAdmin();
+      }
+
+      match /visitors/{uid} {
+        allow read: if true;
+        allow write: if notBanned() && uid == myUid();
+      }
+
+      match /qrTokens/{token} {
+        // A hunter may check a code they scanned, but never browse the list -
+        // that is what stops codes being farmed straight out of the database.
+        allow get: if signedIn();
+        allow list: if false;
+        allow create, delete: if managesCafe(cafeId);
+        allow update: if false;
+      }
+    }
+
+    // ----------------------------------------------------------- check-ins
+
+    match /checkins/{checkInId} {
+      allow read: if signedIn();
+      allow create: if notBanned() && request.resource.data.userId == myUid();
+      // Only a moderator changes a check-in after the fact.
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------- photos
+
+    match /photos/{photoId} {
+      // Photos are shown on the public map and in the feed.
+      allow read: if true;
+      // Base64 of a 500 KB image is about 667k characters; this leaves headroom
+      // while still refusing anything that would blow the 1 MiB document limit.
+      allow create: if notBanned()
+                    && request.resource.data.uploaderId == myUid()
+                    && request.resource.data.base64.size() < 800000;
+      allow update: if false;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uploaderId == myUid());
+    }
+
+    // -------------------------------------------------------------- social
+
+    match /follows/{followId} {
+      allow read: if signedIn();
+      allow create: if notBanned() && request.resource.data.followerId == myUid();
+      allow delete: if signedIn() && resource.data.followerId == myUid();
+      allow update: if false;
+    }
+
+    match /feed/{eventId} {
+      allow read: if signedIn();
+      allow create: if notBanned() && request.resource.data.actorId == myUid();
+      allow update, delete: if isAdmin();
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if true;
+      allow create: if notBanned() && request.resource.data.createdById == myUid();
+      allow update: if false;
+      allow delete: if isAdmin() || (signedIn() && resource.data.createdById == myUid());
+    }
+  }
+}
