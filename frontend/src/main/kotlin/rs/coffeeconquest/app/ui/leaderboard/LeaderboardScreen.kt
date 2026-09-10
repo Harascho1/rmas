@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,6 +42,7 @@ import rs.coffeeconquest.app.ui.common.Avatar
 import rs.coffeeconquest.app.ui.common.EmptyBox
 import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.StateContent
+import rs.coffeeconquest.app.ui.common.rememberVisiblePhoto
 import rs.coffeeconquest.app.ui.points
 import rs.coffeeconquest.shared.dto.LeaderboardEntry
 import rs.coffeeconquest.shared.dto.UserProfile
@@ -54,13 +56,16 @@ fun LeaderboardScreen(
     viewModel: LeaderboardViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val photos by viewModel.photos.collectAsStateWithLifecycle()
 
     LaunchedEffect(profile.id) { viewModel.start(profile.city) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Rang lista") }) },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Column(Modifier
+            .fillMaxSize()
+            .padding(padding)) {
 
             val scopes = listOf(
                 LeaderboardScope.GLOBAL to "Globalno",
@@ -78,7 +83,9 @@ fun LeaderboardScreen(
             }
 
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilterChip(
@@ -95,7 +102,9 @@ fun LeaderboardScreen(
 
             state.champion?.user?.let { champion ->
                 Card(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                     ),
@@ -130,7 +139,15 @@ fun LeaderboardScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(board.entries, key = { it.userId }) { entry ->
-                            LeaderboardRow(entry, onClick = { onUserClick(entry.userId) })
+                            LeaderboardRow(
+                                entry = entry,
+                                avatar = rememberVisiblePhoto(
+                                    entry.avatarPhotoId,
+                                    photos,
+                                    viewModel::requestPhoto
+                                ),
+                                onClick = { onUserClick(entry.userId) },
+                            )
                         }
 
                         // The signed-in user always sees their own row, even outside the top 50.
@@ -138,7 +155,15 @@ fun LeaderboardScreen(
                         if (me != null && board.entries.none { it.isMe }) {
                             item {
                                 Spacer(Modifier.height(8.dp))
-                                LeaderboardRow(me.copy(isMe = true), onClick = { onUserClick(me.userId) })
+                                LeaderboardRow(
+                                    entry = me.copy(isMe = true),
+                                    avatar = rememberVisiblePhoto(
+                                        me.avatarPhotoId,
+                                        photos,
+                                        viewModel::requestPhoto
+                                    ),
+                                    onClick = { onUserClick(me.userId) },
+                                )
                             }
                         }
                     }
@@ -149,9 +174,11 @@ fun LeaderboardScreen(
 }
 
 @Composable
-private fun LeaderboardRow(entry: LeaderboardEntry, onClick: () -> Unit) {
+private fun LeaderboardRow(entry: LeaderboardEntry, avatar: ImageBitmap?, onClick: () -> Unit) {
     Card(
-        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = if (entry.isMe) MaterialTheme.colorScheme.secondaryContainer
             else MaterialTheme.colorScheme.surface,
@@ -172,7 +199,7 @@ private fun LeaderboardRow(entry: LeaderboardEntry, onClick: () -> Unit) {
                 )
             }
             Spacer(Modifier.width(12.dp))
-            Avatar(entry.avatarPhotoId, entry.displayName, size = 36)
+            Avatar(avatar, entry.displayName, size = 36)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(entry.displayName, style = MaterialTheme.typography.titleMedium)

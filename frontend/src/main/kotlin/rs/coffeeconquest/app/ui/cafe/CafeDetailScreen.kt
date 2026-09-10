@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,6 +46,7 @@ import rs.coffeeconquest.app.ui.common.SectionCard
 import rs.coffeeconquest.app.ui.common.StarRating
 import rs.coffeeconquest.app.ui.common.StateContent
 import rs.coffeeconquest.app.ui.UiState
+import rs.coffeeconquest.app.ui.common.rememberVisiblePhoto
 import rs.coffeeconquest.app.ui.formatDistance
 import rs.coffeeconquest.app.ui.formatRating
 import rs.coffeeconquest.app.ui.relativeTime
@@ -65,6 +67,7 @@ fun CafeDetailScreen(
     viewModel: CafeDetailViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val photos by viewModel.photos.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(cafeId) { viewModel.load(cafeId) }
@@ -105,18 +108,27 @@ fun CafeDetailScreen(
             modifier = Modifier.padding(padding),
         ) { cafe ->
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item { CafeHeader(cafe) }
+                item {
+                    CafeHeader(
+                        cafe,
+                        rememberVisiblePhoto(cafe.photoId, photos, viewModel::requestPhoto)
+                    )
+                }
 
                 if (cafe.activeChallenges.isNotEmpty()) {
                     item {
                         SectionCard(title = "Aktivni izazovi") {
                             cafe.activeChallenges.forEach { challenge ->
                                 Row(
-                                    Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Column(Modifier.weight(1f)) {
@@ -246,11 +258,13 @@ fun CafeDetailScreen(
 }
 
 @Composable
-private fun CafeHeader(cafe: Cafe) {
+private fun CafeHeader(cafe: Cafe, photo: ImageBitmap?) {
     Column {
         PhotoThumb(
-            cafe.photoId,
-            Modifier.fillMaxWidth().height(160.dp),
+            photo,
+            Modifier
+                .fillMaxWidth()
+                .height(160.dp),
         )
         Spacer(Modifier.height(12.dp))
         Text(cafe.name, style = MaterialTheme.typography.headlineMedium)

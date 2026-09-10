@@ -1,5 +1,6 @@
 package rs.coffeeconquest.app.ui.profile
 
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
 import rs.coffeeconquest.app.data.firebase.userMessage
+import rs.coffeeconquest.app.ui.PhotoStore
 import rs.coffeeconquest.app.ui.UiState
 import rs.coffeeconquest.shared.dto.CheckIn
 import rs.coffeeconquest.shared.dto.UserStats
@@ -50,6 +52,12 @@ class ProfileViewModel : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileUiState())
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
+
+    private val photoStore = PhotoStore(repository, viewModelScope)
+    val photos: StateFlow<Map<String, ImageBitmap>> = photoStore.photos
+
+    /** The UI reports which photo scrolled into view; fetching it is this ViewModel's job. */
+    fun requestPhoto(photoId: String?) = photoStore.load(photoId)
 
     private var userId: String = ""
 

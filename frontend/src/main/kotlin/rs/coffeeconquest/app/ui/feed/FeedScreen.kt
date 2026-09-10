@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,6 +35,7 @@ import rs.coffeeconquest.app.ui.common.EmptyBox
 import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.PhotoThumb
 import rs.coffeeconquest.app.ui.common.StateContent
+import rs.coffeeconquest.app.ui.common.rememberVisiblePhoto
 import rs.coffeeconquest.app.ui.relativeTime
 import rs.coffeeconquest.shared.dto.FeedItem
 import rs.coffeeconquest.shared.model.FeedEventType
@@ -46,11 +48,14 @@ fun FeedScreen(
     viewModel: FeedViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val photos by viewModel.photos.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.load() }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Sta se desava") }) }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Column(Modifier
+            .fillMaxSize()
+            .padding(padding)) {
             PrimaryTabRow(selectedTabIndex = if (state.followingOnly) 1 else 0) {
                 Tab(
                     selected = !state.followingOnly,
@@ -76,7 +81,16 @@ fun FeedScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         items(items, key = { it.id }) { item ->
-                            FeedRow(item, onCafeClick, onUserClick)
+                            FeedRow(
+                                item = item,
+                                photo = rememberVisiblePhoto(
+                                    item.photoId,
+                                    photos,
+                                    viewModel::requestPhoto
+                                ),
+                                onCafeClick = onCafeClick,
+                                onUserClick = onUserClick,
+                            )
                         }
                     }
                 }
@@ -86,7 +100,12 @@ fun FeedScreen(
 }
 
 @Composable
-private fun FeedRow(item: FeedItem, onCafeClick: (String) -> Unit, onUserClick: (String) -> Unit) {
+private fun FeedRow(
+    item: FeedItem,
+    photo: ImageBitmap?,
+    onCafeClick: (String) -> Unit,
+    onUserClick: (String) -> Unit,
+) {
     Card(
         Modifier
             .fillMaxWidth()
@@ -109,7 +128,9 @@ private fun FeedRow(item: FeedItem, onCafeClick: (String) -> Unit, onUserClick: 
 
             if (item.photoId != null) {
                 Spacer(Modifier.height(10.dp))
-                PhotoThumb(item.photoId, Modifier.fillMaxWidth().height(180.dp))
+                PhotoThumb(photo, Modifier
+                    .fillMaxWidth()
+                    .height(180.dp))
             }
 
             if (item.type == FeedEventType.CHALLENGE_CREATED) {

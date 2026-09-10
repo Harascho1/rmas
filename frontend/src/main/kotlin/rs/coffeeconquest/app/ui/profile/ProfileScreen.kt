@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,6 +52,7 @@ import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.RoleChip
 import rs.coffeeconquest.app.ui.common.SectionCard
 import rs.coffeeconquest.app.ui.common.StateContent
+import rs.coffeeconquest.app.ui.common.rememberVisiblePhoto
 import rs.coffeeconquest.app.ui.days
 import rs.coffeeconquest.app.ui.formatDay
 import rs.coffeeconquest.app.ui.points
@@ -69,6 +71,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val photos by viewModel.photos.collectAsStateWithLifecycle()
 
     LaunchedEffect(profile.id, profile.points) {
         viewModel.load(profile.id, ownProfile = true)
@@ -97,6 +100,11 @@ fun ProfileScreen(
             ProfileBody(
                 stats = stats,
                 state = state,
+                avatar = rememberVisiblePhoto(
+                    stats.profile.avatarPhotoId,
+                    photos,
+                    viewModel::requestPhoto,
+                ),
                 showFollowButton = false,
                 onFollowToggle = {},
                 onCafeClick = onCafeClick,
@@ -115,6 +123,7 @@ fun UserProfileScreen(
     viewModel: ProfileViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val photos by viewModel.photos.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(userId) { viewModel.load(userId, ownProfile = false) }
@@ -146,6 +155,11 @@ fun UserProfileScreen(
             ProfileBody(
                 stats = stats,
                 state = state,
+                avatar = rememberVisiblePhoto(
+                    stats.profile.avatarPhotoId,
+                    photos,
+                    viewModel::requestPhoto,
+                ),
                 showFollowButton = true,
                 onFollowToggle = viewModel::toggleFollow,
                 onCafeClick = onCafeClick,
@@ -159,6 +173,7 @@ fun UserProfileScreen(
 private fun ProfileBody(
     stats: UserStats,
     state: ProfileUiState,
+    avatar: ImageBitmap?,
     showFollowButton: Boolean,
     onFollowToggle: () -> Unit,
     onCafeClick: (String) -> Unit,
@@ -173,7 +188,7 @@ private fun ProfileBody(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Avatar(profile.avatarPhotoId, profile.displayName, size = 64)
+                Avatar(avatar, profile.displayName, size = 64)
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -260,7 +275,9 @@ private fun ProfileBody(
                     items(state.badgeBoard, key = { it.code }) { badge ->
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.width(76.dp).alpha(if (badge.earned) 1f else 0.32f),
+                            modifier = Modifier
+                                .width(76.dp)
+                                .alpha(if (badge.earned) 1f else 0.32f),
                         ) {
                             Box(
                                 Modifier
@@ -319,7 +336,9 @@ private fun ProfileBody(
             }
 
             items(state.history, key = { it.id }) { checkIn ->
-                Card(Modifier.fillMaxWidth().clickable { onCafeClick(checkIn.cafeId) }) {
+                Card(Modifier
+                    .fillMaxWidth()
+                    .clickable { onCafeClick(checkIn.cafeId) }) {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(checkIn.cafeName, style = MaterialTheme.typography.titleMedium)

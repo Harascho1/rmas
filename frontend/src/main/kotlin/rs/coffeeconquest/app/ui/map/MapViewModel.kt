@@ -1,5 +1,6 @@
 package rs.coffeeconquest.app.ui.map
 
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +13,7 @@ import rs.coffeeconquest.app.data.LatLon
 import rs.coffeeconquest.app.data.LocationFix
 import rs.coffeeconquest.app.data.LocationProvider
 import rs.coffeeconquest.app.data.firebase.userMessage
+import rs.coffeeconquest.app.ui.PhotoStore
 import rs.coffeeconquest.app.ui.UiState
 import rs.coffeeconquest.shared.dto.Cafe
 import rs.coffeeconquest.shared.dto.CafeFilter
@@ -40,6 +42,12 @@ class MapViewModel : ViewModel() {
 
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
+
+    private val photoStore = PhotoStore(repository, viewModelScope)
+    val photos: StateFlow<Map<String, ImageBitmap>> = photoStore.photos
+
+    /** The UI reports which photo scrolled into view; fetching it is this ViewModel's job. */
+    fun requestPhoto(photoId: String?) = photoStore.load(photoId)
 
     init {
         locate()

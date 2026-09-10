@@ -1,6 +1,5 @@
 package rs.coffeeconquest.app.ui.common
 
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,23 +32,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import rs.coffeeconquest.app.data.AppContainer
 import rs.coffeeconquest.app.ui.UiState
+import rs.coffeeconquest.app.ui.of
 import rs.coffeeconquest.shared.model.Role
 import rs.coffeeconquest.shared.rules.ScoreRules
 
@@ -62,7 +55,9 @@ fun LoadingBox(modifier: Modifier = Modifier) {
 
 @Composable
 fun ErrorBox(message: String, onRetry: (() -> Unit)? = null, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+    Box(modifier
+        .fillMaxSize()
+        .padding(24.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = message,
@@ -80,7 +75,9 @@ fun ErrorBox(message: String, onRetry: (() -> Unit)? = null, modifier: Modifier 
 
 @Composable
 fun EmptyBox(message: String, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+    Box(modifier
+        .fillMaxSize()
+        .padding(32.dp), contentAlignment = Alignment.Center) {
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
@@ -90,7 +87,6 @@ fun EmptyBox(message: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Renders the three UI states so screens only describe the happy path. */
 @Composable
 fun <T> StateContent(
     state: UiState<T>,
@@ -206,37 +202,26 @@ fun LevelBar(pointsTotal: Int, modifier: Modifier = Modifier) {
         Spacer(Modifier.height(6.dp))
         LinearProgressIndicator(
             progress = { progress.fraction.coerceIn(0f, 1f) },
-            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(50)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(50)),
         )
     }
 }
 
-/**
- * Loads a stored photo and decodes it off the main thread.
- *
- * Photos live in Firestore rather than behind a URL, so there is nothing for an
- * image library to fetch - the bytes are read once, cached by [PhotoSource] and
- * decoded here.
- */
 @Composable
-fun rememberPhoto(photoId: String?): ImageBitmap? {
-    var image by remember(photoId) { mutableStateOf<ImageBitmap?>(null) }
-    LaunchedEffect(photoId) {
-        image = photoId?.let { id ->
-            val bytes = runCatching { AppContainer.repository.photo(id) }.getOrNull()
-            bytes?.let {
-                withContext(Dispatchers.Default) {
-                    BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap()
-                }
-            }
-        }
-    }
-    return image
+fun rememberVisiblePhoto(
+    photoId: String?,
+    photos: Map<String, ImageBitmap>,
+    onVisible: (String?) -> Unit,
+): ImageBitmap? {
+    LaunchedEffect(photoId) { onVisible(photoId) }
+    return photos.of(photoId)
 }
 
 @Composable
-fun PhotoThumb(photoId: String?, modifier: Modifier = Modifier, corner: Int = 12) {
-    val image = rememberPhoto(photoId)
+fun PhotoThumb(image: ImageBitmap?, modifier: Modifier = Modifier, corner: Int = 12) {
     if (image == null) {
         Box(
             modifier
@@ -257,8 +242,12 @@ fun PhotoThumb(photoId: String?, modifier: Modifier = Modifier, corner: Int = 12
 }
 
 @Composable
-fun Avatar(photoId: String?, displayName: String, size: Int = 40, modifier: Modifier = Modifier) {
-    val image = rememberPhoto(photoId)
+fun Avatar(
+    image: ImageBitmap?,
+    displayName: String,
+    size: Int = 40,
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier
             .size(size.dp)

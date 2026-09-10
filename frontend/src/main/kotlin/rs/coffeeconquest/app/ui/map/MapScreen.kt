@@ -53,12 +53,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.PhotoThumb
 import rs.coffeeconquest.app.ui.common.StateContent
+import rs.coffeeconquest.app.ui.common.rememberVisiblePhoto
 import rs.coffeeconquest.app.ui.dataOrNull
 import rs.coffeeconquest.app.ui.formatDistance
 import rs.coffeeconquest.app.ui.formatRating
@@ -77,6 +79,7 @@ fun MapScreen(
     viewModel: MapViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val photos by viewModel.photos.collectAsStateWithLifecycle()
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -94,8 +97,12 @@ fun MapScreen(
         if (state.listMode) {
             CafeList(
                 cafes = cafes,
+                photos = photos,
+                onPhotoVisible = viewModel::requestPhoto,
                 onCafeClick = onCafeClick,
-                modifier = Modifier.fillMaxSize().padding(top = 88.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 88.dp),
             )
         } else {
             OsmMap(
@@ -231,23 +238,35 @@ fun MapScreen(
 }
 
 @Composable
-private fun CafeList(cafes: List<Cafe>, onCafeClick: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun CafeList(
+    cafes: List<Cafe>,
+    photos: Map<String, ImageBitmap>,
+    onPhotoVisible: (String?) -> Unit,
+    onCafeClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(cafes, key = { it.id }) { cafe ->
-            CafeRow(cafe = cafe, onClick = { onCafeClick(cafe.id) })
+            CafeRow(
+                cafe = cafe,
+                photo = rememberVisiblePhoto(cafe.photoId, photos, onPhotoVisible),
+                onClick = { onCafeClick(cafe.id) },
+            )
         }
     }
 }
 
 @Composable
-fun CafeRow(cafe: Cafe, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth().clickable(onClick = onClick)) {
+fun CafeRow(cafe: Cafe, photo: ImageBitmap?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(modifier = modifier
+        .fillMaxWidth()
+        .clickable(onClick = onClick)) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            PhotoThumb(cafe.photoId, Modifier.size(56.dp))
+            PhotoThumb(photo, Modifier.size(56.dp))
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(cafe.name, style = MaterialTheme.typography.titleMedium)
@@ -276,7 +295,9 @@ fun CafeRow(cafe: Cafe, onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 private fun CafePreview(cafe: Cafe, onOpen: () -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(20.dp)) {
+    Column(Modifier
+        .fillMaxWidth()
+        .padding(20.dp)) {
         Text(cafe.name, style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(4.dp))
         Text(
@@ -298,7 +319,7 @@ private fun CafePreview(cafe: Cafe, onOpen: () -> Unit) {
             )
         }
         Spacer(Modifier.height(20.dp))
-        androidx.compose.material3.Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
             Text("Otvori kafic")
         }
         Spacer(Modifier.height(12.dp))

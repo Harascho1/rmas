@@ -45,6 +45,7 @@ import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.RoleChip
 import rs.coffeeconquest.app.ui.common.PhotoThumb
 import rs.coffeeconquest.app.ui.common.StateContent
+import rs.coffeeconquest.app.ui.common.rememberVisiblePhoto
 import rs.coffeeconquest.app.ui.formatDistance
 import rs.coffeeconquest.app.ui.points
 import rs.coffeeconquest.app.ui.relativeTime
@@ -57,6 +58,7 @@ fun AdminScreen(
     viewModel: AdminViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val photos by viewModel.photos.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) { viewModel.load() }
@@ -71,7 +73,9 @@ fun AdminScreen(
         topBar = { TopAppBar(title = { Text("Moderacija") }) },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Column(Modifier
+            .fillMaxSize()
+            .padding(padding)) {
             val tabs = listOf(
                 AdminTab.CAFES to "Kafici",
                 AdminTab.CHECK_INS to "Check-inovi",
@@ -101,8 +105,14 @@ fun AdminScreen(
                                     Column(Modifier.padding(14.dp)) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             PhotoThumb(
-                                                cafe.photoId,
-                                                Modifier.width(56.dp).height(56.dp),
+                                                rememberVisiblePhoto(
+                                                    cafe.photoId,
+                                                    photos,
+                                                    viewModel::requestPhoto
+                                                ),
+                                                Modifier
+                                                    .width(56.dp)
+                                                    .height(56.dp),
                                             )
                                             Spacer(Modifier.width(12.dp))
                                             Column(Modifier.weight(1f)) {
@@ -174,7 +184,16 @@ fun AdminScreen(
                                         }
                                         if (checkIn.photoId != null) {
                                             Spacer(Modifier.height(8.dp))
-                                            PhotoThumb(checkIn.photoId, Modifier.fillMaxWidth().height(160.dp))
+                                            PhotoThumb(
+                                                rememberVisiblePhoto(
+                                                    checkIn.photoId,
+                                                    photos,
+                                                    viewModel::requestPhoto
+                                                ),
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .height(160.dp),
+                                            )
                                         }
                                         Spacer(Modifier.height(12.dp))
                                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -203,7 +222,15 @@ fun AdminScreen(
                             var menuOpen by remember { mutableStateOf(false) }
                             Card(Modifier.fillMaxWidth()) {
                                 Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Avatar(user.avatarPhotoId, user.displayName, size = 40)
+                                    Avatar(
+                                        rememberVisiblePhoto(
+                                            user.avatarPhotoId,
+                                            photos,
+                                            viewModel::requestPhoto
+                                        ),
+                                        user.displayName,
+                                        size = 40,
+                                    )
                                     Spacer(Modifier.width(12.dp))
                                     Column(Modifier.weight(1f)) {
                                         Text(user.displayName, style = MaterialTheme.typography.titleMedium)
