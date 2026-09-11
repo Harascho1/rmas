@@ -43,6 +43,7 @@ android {
     }
 
     sourceSets["main"].java.srcDirs("src/main/kotlin")
+    sourceSets["test"].java.srcDirs("src/test/kotlin")
 
     packaging {
         resources.excludes += setOf(
@@ -81,4 +82,8 @@ dependencies {
     implementation(libs.osmdroid.android)
     implementation(libs.zxing.core)
     implementation(libs.zxing.android.embedded)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

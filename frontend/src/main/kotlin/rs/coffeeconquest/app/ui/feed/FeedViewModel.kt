@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
+import rs.coffeeconquest.app.data.CoffeeRepository
 import rs.coffeeconquest.app.data.firebase.userMessage
 import rs.coffeeconquest.app.ui.PhotoStore
 import rs.coffeeconquest.app.ui.UiState
@@ -21,9 +22,9 @@ data class FeedUiState(
     val followingOnly: Boolean = false,
 )
 
-class FeedViewModel : ViewModel() {
-
-    private val repository = AppContainer.repository
+class FeedViewModel(
+    private val repository: CoffeeRepository = AppContainer.repository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(FeedUiState())
     val state: StateFlow<FeedUiState> = _state.asStateFlow()

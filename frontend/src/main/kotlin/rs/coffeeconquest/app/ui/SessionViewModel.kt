@@ -7,16 +7,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
+import rs.coffeeconquest.app.data.CoffeeRepository
 import rs.coffeeconquest.shared.dto.UserProfile
 
-/**
- * Who is signed in. Held above the nav host so every screen can branch on the
- * role without fetching the profile again.
- */
-class SessionViewModel : ViewModel() {
-
-    private val repository = AppContainer.repository
-
+class SessionViewModel(
+    private val repository: CoffeeRepository = AppContainer.repository,
+) : ViewModel() {
     private val _state = MutableStateFlow<SessionState>(SessionState.Checking)
     val state: StateFlow<SessionState> = _state.asStateFlow()
 
@@ -24,7 +20,6 @@ class SessionViewModel : ViewModel() {
         restore()
     }
 
-    /** Silently resumes a stored session, or falls back to the auth screen. */
     fun restore() {
         viewModelScope.launch {
             _state.value = SessionState.Checking
@@ -47,7 +42,6 @@ class SessionViewModel : ViewModel() {
         _state.value = SessionState.SignedIn(profile)
     }
 
-    /** Called after actions that change points or role, so the header stays honest. */
     fun refreshProfile() {
         viewModelScope.launch {
             runCatching { repository.me() }.onSuccess { _state.value = SessionState.SignedIn(it) }

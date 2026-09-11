@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
+import rs.coffeeconquest.app.data.CoffeeRepository
 import rs.coffeeconquest.app.data.firebase.userMessage
 import rs.coffeeconquest.shared.dto.RegisterRequest
 import rs.coffeeconquest.shared.dto.UserProfile
@@ -43,9 +44,9 @@ data class AuthUiState(
     val canSubmit: Boolean get() = !submitting && validationError == null
 }
 
-class AuthViewModel : ViewModel() {
-
-    private val repository = AppContainer.repository
+class AuthViewModel(
+    private val repository: CoffeeRepository = AppContainer.repository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()

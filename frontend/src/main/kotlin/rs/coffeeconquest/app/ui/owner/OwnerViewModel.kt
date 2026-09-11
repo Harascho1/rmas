@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
+import rs.coffeeconquest.app.data.CoffeeRepository
 import rs.coffeeconquest.app.data.firebase.userMessage
 import rs.coffeeconquest.app.ui.UiState
 import rs.coffeeconquest.shared.dto.Cafe
@@ -16,9 +17,9 @@ data class OwnerUiState(
     val cafes: UiState<List<Cafe>> = UiState.Loading,
 )
 
-class OwnerViewModel : ViewModel() {
-
-    private val repository = AppContainer.repository
+class OwnerViewModel(
+    private val repository: CoffeeRepository = AppContainer.repository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(OwnerUiState())
     val state: StateFlow<OwnerUiState> = _state.asStateFlow()

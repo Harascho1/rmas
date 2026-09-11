@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
+import rs.coffeeconquest.app.data.CoffeeRepository
 import rs.coffeeconquest.app.data.LocationFix
+import rs.coffeeconquest.app.data.LocationProvider
 import rs.coffeeconquest.app.data.firebase.userMessage
 import rs.coffeeconquest.app.ui.UiState
 import rs.coffeeconquest.shared.dto.Cafe
@@ -63,10 +65,10 @@ data class CheckInUiState(
         }
 }
 
-class CheckInViewModel : ViewModel() {
-
-    private val repository = AppContainer.repository
-    private val location = AppContainer.location
+class CheckInViewModel(
+    private val repository: CoffeeRepository = AppContainer.repository,
+    private val location: LocationProvider = AppContainer.location,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(CheckInUiState())
     val state: StateFlow<CheckInUiState> = _state.asStateFlow()

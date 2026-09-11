@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
+import rs.coffeeconquest.app.data.CoffeeRepository
 import rs.coffeeconquest.app.data.firebase.userMessage
 import rs.coffeeconquest.app.ui.PhotoStore
 import rs.coffeeconquest.app.ui.UiState
@@ -24,9 +25,9 @@ data class LeaderboardUiState(
     val champion: CityChampion? = null,
 )
 
-class LeaderboardViewModel : ViewModel() {
-
-    private val repository = AppContainer.repository
+class LeaderboardViewModel(
+    private val repository: CoffeeRepository = AppContainer.repository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(LeaderboardUiState())
     val state: StateFlow<LeaderboardUiState> = _state.asStateFlow()

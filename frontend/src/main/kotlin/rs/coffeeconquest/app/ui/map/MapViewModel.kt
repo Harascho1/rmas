@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
+import rs.coffeeconquest.app.data.CoffeeRepository
 import rs.coffeeconquest.app.data.LatLon
 import rs.coffeeconquest.app.data.LocationFix
 import rs.coffeeconquest.app.data.LocationProvider
@@ -36,10 +37,10 @@ data class MapUiState(
     val radiusKm: Double get() = radiusMeters / 1000.0
 }
 
-class MapViewModel : ViewModel() {
-
-    private val repository = AppContainer.repository
-    private val location = AppContainer.location
+class MapViewModel(
+    private val repository: CoffeeRepository = AppContainer.repository,
+    private val location: LocationProvider = AppContainer.location,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
@@ -47,14 +48,12 @@ class MapViewModel : ViewModel() {
     private val photoStore = PhotoStore(repository, viewModelScope)
     val photos: StateFlow<Map<String, ImageBitmap>> = photoStore.photos
 
-    /** The UI reports which photo scrolled into view; fetching it is this ViewModel's job. */
     fun requestPhoto(photoId: String?) = photoStore.load(photoId)
 
     init {
         locate()
     }
 
-    /** Centres on the user when a fix is available, then loads what is around them. */
     fun locate() {
         viewModelScope.launch {
             val fix = location.current()
@@ -100,7 +99,6 @@ class MapViewModel : ViewModel() {
 
     fun openFilters() = _state.update { it.copy(filterSheetOpen = true) }
 
-    /** Closing the sheet is what applies the filter, so one edit is one query. */
     fun closeFilters(apply: Boolean = true) {
         _state.update { it.copy(filterSheetOpen = false) }
         if (apply) load()
@@ -140,7 +138,6 @@ class MapViewModel : ViewModel() {
     fun toggleListMode() = _state.update { it.copy(listMode = !it.listMode) }
 
     companion object {
-        /** The radius slider runs between these, in metres. */
         const val MIN_RADIUS_M = 500.0
         const val MAX_RADIUS_M = 25_000.0
     }
