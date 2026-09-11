@@ -9,9 +9,9 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.ui.graphics.vector.ImageVector
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.shared.model.Role
 
-/** Every destination in the app, in one place. */
 object Routes {
     const val AUTH = "auth"
     const val MAP = "map"
@@ -37,40 +37,35 @@ object Routes {
     fun cafeManage(cafeId: String) = "manage/$cafeId"
 }
 
-/** A tab in the bottom bar. Which tabs exist depends on the signed-in role. */
 data class TabDestination(
     val route: String,
-    val label: String,
+    val labelRes: Int,
     val icon: ImageVector,
 )
 
-/**
- * Role-driven navigation: a hunter plays the game, an owner runs a business, staff
- * only needs the QR screen, an admin moderates. Everyone keeps map and profile.
- */
 fun tabsFor(role: Role): List<TabDestination> {
-    val map = TabDestination(Routes.MAP, "Mapa", Icons.Filled.Map)
-    val leaderboard = TabDestination(Routes.LEADERBOARD, "Lista", Icons.Filled.EmojiEvents)
-    val feed = TabDestination(Routes.FEED, "Feed", Icons.Filled.DynamicFeed)
-    val profile = TabDestination(Routes.PROFILE, "Profil", Icons.Filled.Person)
+    val map = TabDestination(Routes.MAP, R.string.nav_tab_map, Icons.Filled.Map)
+    val leaderboard = TabDestination(Routes.LEADERBOARD, R.string.nav_tab_leaderboard, Icons.Filled.EmojiEvents)
+    val feed = TabDestination(Routes.FEED, R.string.nav_tab_feed, Icons.Filled.DynamicFeed)
+    val profile = TabDestination(Routes.PROFILE, R.string.nav_tab_profile, Icons.Filled.Person)
 
     return when (role) {
         Role.HUNTER -> listOf(map, leaderboard, feed, profile)
         Role.OWNER -> listOf(
             map,
-            TabDestination(Routes.OWNER, "Moji kafici", Icons.Filled.Dashboard),
+            TabDestination(Routes.OWNER, R.string.nav_tab_owner_cafes, Icons.Filled.Dashboard),
             feed,
             profile,
         )
         Role.STAFF -> listOf(
             map,
-            TabDestination(Routes.STAFF, "QR kod", Icons.Filled.QrCode2),
+            TabDestination(Routes.STAFF, R.string.nav_tab_staff_qr, Icons.Filled.QrCode2),
             feed,
             profile,
         )
         Role.ADMIN -> listOf(
             map,
-            TabDestination(Routes.ADMIN, "Moderacija", Icons.Filled.AdminPanelSettings),
+            TabDestination(Routes.ADMIN, R.string.nav_tab_admin_moderation, Icons.Filled.AdminPanelSettings),
             leaderboard,
             profile,
         )

@@ -23,17 +23,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.common.EmptyBox
 import rs.coffeeconquest.app.ui.common.StateContent
 
-/**
- * The staff screen: one big QR code that a guest scans to prove they are really
- * in the cafe. The code rotates, so a screenshot is worthless a few minutes later.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StaffQrScreen(viewModel: StaffQrViewModel = viewModel()) {
@@ -41,14 +39,14 @@ fun StaffQrScreen(viewModel: StaffQrViewModel = viewModel()) {
 
     LaunchedEffect(Unit) { viewModel.load() }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("QR potvrda") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.staffqr_title)) }) }) { padding ->
         StateContent(
             state = state.cafes,
             onRetry = viewModel::load,
             modifier = Modifier.padding(padding),
         ) { cafes ->
             if (cafes.isEmpty()) {
-                EmptyBox("Niste dodeljeni nijednom kaficu. Zamolite vlasnika da vas doda kao osoblje.")
+                EmptyBox(stringResource(R.string.staffqr_empty_no_cafe))
             } else {
                 Column(
                     Modifier.fillMaxSize().padding(padding).padding(20.dp),
@@ -71,7 +69,7 @@ fun StaffQrScreen(viewModel: StaffQrViewModel = viewModel()) {
                     if (bitmap != null) {
                         Image(
                             bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "QR kod za check-in",
+                            contentDescription = stringResource(R.string.staffqr_qr_content_description),
                             modifier = Modifier.size(280.dp),
                         )
                         Spacer(Modifier.height(16.dp))
@@ -80,14 +78,14 @@ fun StaffQrScreen(viewModel: StaffQrViewModel = viewModel()) {
                             style = MaterialTheme.typography.titleLarge,
                         )
                         Text(
-                            "Kod istice ${state.secondsLeft}s - gost ga skenira pri check-inu.",
+                            stringResource(R.string.staffqr_expires_in, state.secondsLeft),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                         )
                     } else {
                         Text(
-                            "Pritisnite dugme da generisete kod.",
+                            stringResource(R.string.staffqr_press_to_generate),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -98,7 +96,10 @@ fun StaffQrScreen(viewModel: StaffQrViewModel = viewModel()) {
                         enabled = !state.busy,
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                     ) {
-                        Text(if (state.qrBitmap == null) "Generisi QR kod" else "Novi kod")
+                        Text(
+                            if (state.qrBitmap == null) stringResource(R.string.staffqr_generate_button)
+                            else stringResource(R.string.staffqr_new_code_button),
+                        )
                     }
 
                     state.error?.let {

@@ -45,10 +45,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.common.Avatar
 import rs.coffeeconquest.app.ui.common.LevelBar
 import rs.coffeeconquest.app.ui.common.Pill
@@ -83,10 +85,13 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Moj profil") },
+                title = { Text(stringResource(R.string.profile_own_title)) },
                 actions = {
                     IconButton(onClick = onSignOut) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Odjava")
+                        Icon(
+                            Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = stringResource(R.string.profile_logout_content_description),
+                        )
                     }
                 },
             )
@@ -141,10 +146,13 @@ fun UserProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profil") },
+                title = { Text(stringResource(R.string.profile_other_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Nazad")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.profile_back_content_description),
+                        )
                     }
                 },
             )
@@ -205,11 +213,15 @@ private fun ProfileBody(
                         Text(profile.displayName, style = MaterialTheme.typography.titleLarge)
                         if (profile.isCityChampion) {
                             Spacer(Modifier.width(6.dp))
-                            Text("👑", style = MaterialTheme.typography.titleLarge)
+                            Text(
+                                stringResource(R.string.profile_city_champion_crown),
+                                style = MaterialTheme.typography.titleLarge,
+                            )
                         }
                     }
                     Text(
-                        "@${profile.username}${profile.city?.let { " · $it" } ?: ""}",
+                        stringResource(R.string.profile_username_handle, profile.username) +
+                            (profile.city?.let { stringResource(R.string.profile_username_city_suffix, it) } ?: ""),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -227,7 +239,10 @@ private fun ProfileBody(
                     ),
                 ) {
                     Text(
-                        "Nalog je blokiran: ${profile.banReason ?: "bez obrazlozenja"}",
+                        stringResource(
+                            R.string.profile_banned_message,
+                            profile.banReason ?: stringResource(R.string.profile_ban_no_reason),
+                        ),
                         Modifier.padding(12.dp),
                         color = MaterialTheme.colorScheme.onErrorContainer,
                     )
@@ -242,13 +257,13 @@ private fun ProfileBody(
                         onClick = onFollowToggle,
                         enabled = !state.followBusy,
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Prestani da pratis") }
+                    ) { Text(stringResource(R.string.profile_unfollow_button)) }
                 } else {
                     Button(
                         onClick = onFollowToggle,
                         enabled = !state.followBusy,
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Zaprati") }
+                    ) { Text(stringResource(R.string.profile_follow_button)) }
                 }
             }
         }
@@ -261,26 +276,32 @@ private fun ProfileBody(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
-                    StatCell(points(profile.points), "poeni")
-                    StatCell("${profile.checkInCount}", "check-inovi")
-                    StatCell("${profile.conqueredCafes}", "kafica")
-                    StatCell(days(profile.currentStreakDays), "streak")
+                    StatCell(points(profile.points), stringResource(R.string.profile_stat_points_label))
+                    StatCell("${profile.checkInCount}", stringResource(R.string.profile_stat_checkins_label))
+                    StatCell("${profile.conqueredCafes}", stringResource(R.string.profile_stat_conquered_label))
+                    StatCell(days(profile.currentStreakDays), stringResource(R.string.profile_stat_streak_label))
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
-                    StatCell("${profile.followerCount}", "prati vas")
-                    StatCell("${profile.followingCount}", "pratite")
-                    StatCell("${profile.reviewCount}", "recenzije")
-                    StatCell(days(profile.longestStreakDays), "najduzi")
+                    StatCell("${profile.followerCount}", stringResource(R.string.profile_stat_followers_label))
+                    StatCell("${profile.followingCount}", stringResource(R.string.profile_stat_following_label))
+                    StatCell("${profile.reviewCount}", stringResource(R.string.profile_stat_reviews_label))
+                    StatCell(days(profile.longestStreakDays), stringResource(R.string.profile_stat_longest_streak_label))
                 }
             }
         }
 
         item {
-            SectionCard(title = "Bedzevi (${stats.badges.size}/${state.badgeBoard.size})") {
+            SectionCard(
+                title = stringResource(
+                    R.string.profile_badges_section_title,
+                    stats.badges.size,
+                    state.badgeBoard.size,
+                ),
+            ) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(state.badgeBoard, key = { it.code }) { badge ->
                         Column(
@@ -290,7 +311,6 @@ private fun ProfileBody(
                                 .clickable { onBadgeClick(badge.code) }
                                 .width(76.dp)
                                 .padding(vertical = 4.dp)
-                                // A locked badge is dimmed, but still opens its card.
                                 .alpha(if (badge.earned) 1f else 0.32f),
                         ) {
                             Box(
@@ -316,7 +336,9 @@ private fun ProfileBody(
 
         if (stats.conquered.isNotEmpty()) {
             item {
-                SectionCard(title = "Osvojeni kafici (${stats.conquered.size})") {
+                SectionCard(
+                    title = stringResource(R.string.profile_conquered_cafes_section_title, stats.conquered.size),
+                ) {
                     stats.conquered.take(10).forEach { cafe ->
                         Row(
                             Modifier
@@ -328,12 +350,16 @@ private fun ProfileBody(
                             Column(Modifier.weight(1f)) {
                                 Text(cafe.name, style = MaterialTheme.typography.titleMedium)
                                 Text(
-                                    "${cafe.visits}x · poslednji put ${formatDay(cafe.lastVisitEpochMs)}",
+                                    stringResource(
+                                        R.string.profile_cafe_visit_summary,
+                                        cafe.visits,
+                                        formatDay(cafe.lastVisitEpochMs),
+                                    ),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            if (cafe.isTopVisitor) Pill("👑 osvajac")
+                            if (cafe.isTopVisitor) Pill(stringResource(R.string.profile_top_visitor_pill))
                         }
                     }
                 }
@@ -343,7 +369,7 @@ private fun ProfileBody(
         if (state.history.isNotEmpty()) {
             item {
                 Text(
-                    "Istorija check-inova",
+                    stringResource(R.string.profile_history_section_title),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(top = 8.dp),
                 )
@@ -357,20 +383,26 @@ private fun ProfileBody(
                         Column(Modifier.weight(1f)) {
                             Text(checkIn.cafeName, style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "${relativeTime(checkIn.createdAtEpochMs)} · ${checkIn.method}",
+                                stringResource(
+                                    R.string.profile_checkin_history_row,
+                                    relativeTime(checkIn.createdAtEpochMs),
+                                    checkIn.method,
+                                ),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         when (checkIn.status) {
-                            CheckInStatus.VALID -> Pill("+${checkIn.pointsAwarded}")
+                            CheckInStatus.VALID -> Pill(
+                                stringResource(R.string.profile_points_awarded_pill, checkIn.pointsAwarded),
+                            )
                             CheckInStatus.FLAGGED -> Pill(
-                                "na proveri",
+                                stringResource(R.string.profile_status_flagged_label),
                                 background = MaterialTheme.colorScheme.errorContainer,
                                 foreground = MaterialTheme.colorScheme.onErrorContainer,
                             )
                             CheckInStatus.INVALIDATED -> Pill(
-                                "ponisten",
+                                stringResource(R.string.profile_status_invalidated_label),
                                 background = MaterialTheme.colorScheme.errorContainer,
                                 foreground = MaterialTheme.colorScheme.onErrorContainer,
                             )
@@ -382,10 +414,6 @@ private fun ProfileBody(
     }
 }
 
-/**
- * The small card behind every badge: what it is, and - the point of it - exactly
- * what is left to do when it has not been earned yet.
- */
 @Composable
 private fun BadgeDialog(badge: BadgeSlot, onDismiss: () -> Unit) {
     AlertDialog(
@@ -398,17 +426,18 @@ private fun BadgeDialog(badge: BadgeSlot, onDismiss: () -> Unit) {
             ) {
                 Text(badge.title, style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(4.dp))
-                if (badge.earnedAtEpochMs != null) {
-                    Pill("Osvojen ${formatDay(badge.earnedAtEpochMs)}")
+                val earnedAtEpochMs = badge.earnedAtEpochMs
+                if (earnedAtEpochMs != null) {
+                    Pill(stringResource(R.string.profile_badge_earned_on, formatDay(earnedAtEpochMs)))
                 } else {
-                    Pill("Jos nije osvojen")
+                    Pill(stringResource(R.string.profile_badge_not_earned_yet))
                 }
             }
         },
         text = {
             Column {
                 Text(
-                    "Kako se osvaja",
+                    stringResource(R.string.profile_badge_how_to_earn_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -428,7 +457,7 @@ private fun BadgeDialog(badge: BadgeSlot, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Zatvori") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.profile_close_button)) }
         },
     )
 }

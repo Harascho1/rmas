@@ -78,7 +78,6 @@ class StaffQrViewModel(
         }
     }
 
-    /** Keeps the "expires in" label honest and clears the code once it is stale. */
     private fun tickCountdown() {
         viewModelScope.launch {
             while (true) {

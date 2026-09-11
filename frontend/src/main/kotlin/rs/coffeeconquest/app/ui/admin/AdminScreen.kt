@@ -36,9 +36,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.common.Avatar
 import rs.coffeeconquest.app.ui.common.EmptyBox
 import rs.coffeeconquest.app.ui.common.Pill
@@ -70,16 +72,16 @@ fun AdminScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Moderacija") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.admin_title)) }) },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Column(Modifier
             .fillMaxSize()
             .padding(padding)) {
             val tabs = listOf(
-                AdminTab.CAFES to "Kafici",
-                AdminTab.CHECK_INS to "Check-inovi",
-                AdminTab.USERS to "Korisnici",
+                AdminTab.CAFES to stringResource(R.string.admin_tab_cafes),
+                AdminTab.CHECK_INS to stringResource(R.string.admin_tab_checkins),
+                AdminTab.USERS to stringResource(R.string.admin_tab_users),
             )
             PrimaryTabRow(selectedTabIndex = tabs.indexOfFirst { it.first == state.tab }) {
                 tabs.forEach { (tab, label) ->
@@ -94,7 +96,7 @@ fun AdminScreen(
             when (state.tab) {
                 AdminTab.CAFES -> StateContent(state.pendingCafes, viewModel::load) { cafes ->
                     if (cafes.isEmpty()) {
-                        EmptyBox("Nema kafica koji cekaju odobrenje.")
+                        EmptyBox(stringResource(R.string.admin_empty_cafes))
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(16.dp),
@@ -118,7 +120,9 @@ fun AdminScreen(
                                             Column(Modifier.weight(1f)) {
                                                 Text(cafe.name, style = MaterialTheme.typography.titleMedium)
                                                 Text(
-                                                    listOfNotNull(cafe.address, cafe.city).joinToString(", "),
+                                                    listOfNotNull(cafe.address, cafe.city).joinToString(
+                                                        stringResource(R.string.admin_list_separator),
+                                                    ),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )
@@ -130,7 +134,7 @@ fun AdminScreen(
                                         }
                                         Spacer(Modifier.height(6.dp))
                                         Text(
-                                            "Koordinate: ${cafe.latitude}, ${cafe.longitude}",
+                                            stringResource(R.string.admin_coordinates, cafe.latitude, cafe.longitude),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
@@ -139,12 +143,12 @@ fun AdminScreen(
                                             Button(
                                                 onClick = { viewModel.moderateCafe(cafe.id, true) },
                                                 enabled = !state.busy,
-                                            ) { Text("Odobri") }
+                                            ) { Text(stringResource(R.string.admin_button_approve)) }
                                             OutlinedButton(
                                                 onClick = { viewModel.moderateCafe(cafe.id, false) },
                                                 enabled = !state.busy,
-                                            ) { Text("Odbij") }
-                                            TextButton(onClick = { onCafeClick(cafe.id) }) { Text("Detalji") }
+                                            ) { Text(stringResource(R.string.admin_button_reject)) }
+                                            TextButton(onClick = { onCafeClick(cafe.id) }) { Text(stringResource(R.string.admin_button_details)) }
                                         }
                                     }
                                 }
@@ -155,7 +159,7 @@ fun AdminScreen(
 
                 AdminTab.CHECK_INS -> StateContent(state.flagged, viewModel::load) { checkIns ->
                     if (checkIns.isEmpty()) {
-                        EmptyBox("Nema check-inova pod sumnjom. Sistem ih oznaci automatski.")
+                        EmptyBox(stringResource(R.string.admin_empty_checkins))
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(16.dp),
@@ -165,12 +169,22 @@ fun AdminScreen(
                                 Card(Modifier.fillMaxWidth()) {
                                     Column(Modifier.padding(14.dp)) {
                                         Text(
-                                            "${checkIn.username} @ ${checkIn.cafeName}",
+                                            stringResource(
+                                                R.string.admin_checkin_user_at_cafe,
+                                                checkIn.username,
+                                                checkIn.cafeName,
+                                            ),
                                             style = MaterialTheme.typography.titleMedium,
                                         )
                                         Text(
-                                            "${relativeTime(checkIn.createdAtEpochMs)} · ${checkIn.method}" +
-                                                (formatDistance(checkIn.distanceMeters)?.let { " · $it" } ?: ""),
+                                            stringResource(
+                                                R.string.admin_checkin_time_method,
+                                                relativeTime(checkIn.createdAtEpochMs),
+                                                checkIn.method,
+                                            ) +
+                                                (formatDistance(checkIn.distanceMeters)?.let {
+                                                    stringResource(R.string.admin_checkin_distance_suffix, it)
+                                                } ?: ""),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
@@ -200,11 +214,11 @@ fun AdminScreen(
                                             Button(
                                                 onClick = { viewModel.moderateCheckIn(checkIn.id, true) },
                                                 enabled = !state.busy,
-                                            ) { Text("Prihvati") }
+                                            ) { Text(stringResource(R.string.admin_button_accept)) }
                                             OutlinedButton(
                                                 onClick = { viewModel.moderateCheckIn(checkIn.id, false) },
                                                 enabled = !state.busy,
-                                            ) { Text("Ponisti") }
+                                            ) { Text(stringResource(R.string.admin_button_cancel)) }
                                         }
                                     }
                                 }
@@ -235,7 +249,11 @@ fun AdminScreen(
                                     Column(Modifier.weight(1f)) {
                                         Text(user.displayName, style = MaterialTheme.typography.titleMedium)
                                         Text(
-                                            "@${user.username} · ${points(user.points)}",
+                                            stringResource(
+                                                R.string.admin_user_username_points,
+                                                user.username,
+                                                points(user.points),
+                                            ),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
@@ -244,7 +262,7 @@ fun AdminScreen(
                                             RoleChip(user.role)
                                             if (user.isBanned) {
                                                 Pill(
-                                                    "blokiran",
+                                                    stringResource(R.string.admin_pill_banned),
                                                     background = MaterialTheme.colorScheme.errorContainer,
                                                     foreground = MaterialTheme.colorScheme.onErrorContainer,
                                                 )
@@ -255,7 +273,7 @@ fun AdminScreen(
                                         TextButton(
                                             onClick = { menuOpen = true },
                                             modifier = Modifier.clickable { menuOpen = true },
-                                        ) { Text("Rola") }
+                                        ) { Text(stringResource(R.string.admin_button_role)) }
                                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                                             Role.entries.forEach { role ->
                                                 DropdownMenuItem(
@@ -271,7 +289,13 @@ fun AdminScreen(
                                             onClick = { viewModel.setBanned(user.id, !user.isBanned) },
                                             enabled = !state.busy,
                                         ) {
-                                            Text(if (user.isBanned) "Odblokiraj" else "Blokiraj")
+                                            Text(
+                                                if (user.isBanned) {
+                                                    stringResource(R.string.admin_button_unban)
+                                                } else {
+                                                    stringResource(R.string.admin_button_ban)
+                                                },
+                                            )
                                         }
                                     }
                                 }

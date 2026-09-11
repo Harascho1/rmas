@@ -113,7 +113,6 @@ class CafeManageViewModelTest {
         coVerify(exactly = 0) { repository.createChallenge(any()) }
     }
 
-    /** The form speaks in days; the request must speak in milliseconds. */
     @Test
     fun `the challenge window is built from the chosen number of days`() {
         val viewModel = CafeManageViewModel(repository)

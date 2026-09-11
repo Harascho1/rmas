@@ -1,3 +1,298 @@
 <resources>
     <string name="app_name">Coffee Conquest</string>
+
+    <!-- CafeManageScreen -->
+    <string name="cafemanage_title">Upravljanje kaficem</string>
+    <string name="cafemanage_back">Nazad</string>
+    <string name="cafemanage_section_stats">Statistika</string>
+    <string name="cafemanage_metric_total">ukupno</string>
+    <string name="cafemanage_metric_7_days">7 dana</string>
+    <string name="cafemanage_metric_30_days">30 dana</string>
+    <string name="cafemanage_metric_guests">gostiju</string>
+    <string name="cafemanage_metric_average">prosek</string>
+    <string name="cafemanage_metric_reviews">recenzija</string>
+    <string name="cafemanage_metric_unanswered">bez odgovora</string>
+    <string name="cafemanage_checkins_per_day">Check-inovi po danu</string>
+    <string name="cafemanage_section_top_visitors">Najverniji gosti</string>
+    <string name="cafemanage_rank_format">%1$d.</string>
+    <string name="cafemanage_visits_count">%1$d poseta</string>
+    <string name="cafemanage_section_bonus_challenge">Bonus izazov</string>
+    <string name="cafemanage_challenge_description">Podignite broj poena da privucete goste. Vazi samo za ovaj kafic.</string>
+    <string name="cafemanage_challenge_title_label">Naziv, npr. Dupli poeni danas</string>
+    <string name="cafemanage_multiplier_format">x%1$s</string>
+    <string name="cafemanage_days_format">%1$d d</string>
+    <string name="cafemanage_start_challenge">Pokreni izazov</string>
+    <string name="cafemanage_challenge_summary">x%1$s do %2$s</string>
+    <string name="cafemanage_cancel_challenge">Ukini</string>
+    <string name="cafemanage_reviews_count">Recenzije (%1$d)</string>
+    <string name="cafemanage_owner_reply">Vas odgovor: %1$s</string>
+    <string name="cafemanage_reply_placeholder">Odgovorite gostu</string>
+    <string name="cafemanage_send_reply">Posalji odgovor</string>
+
+    <!-- OwnerScreen -->
+    <string name="owner_title">Moji kafici</string>
+    <string name="owner_add_cafe">Dodaj kafic</string>
+    <string name="owner_empty_cafes">Jos nemate nijedan kafic. Dodajte ga preko + dugmeta - administrator ga zatim odobrava.</string>
+    <string name="owner_status_approved">na mapi</string>
+    <string name="owner_status_pending">ceka odobrenje</string>
+    <string name="owner_status_rejected">odbijen</string>
+    <string name="owner_rating_format">★ %1$s</string>
+    <string name="owner_visits_format">%1$d poseta</string>
+    <string name="owner_challenge_active">izazov aktivan</string>
+
+    <!-- StaffQrScreen -->
+    <string name="staffqr_title">QR potvrda</string>
+    <string name="staffqr_empty_no_cafe">Niste dodeljeni nijednom kaficu. Zamolite vlasnika da vas doda kao osoblje.</string>
+    <string name="staffqr_qr_content_description">QR kod za check-in</string>
+    <string name="staffqr_expires_in">Kod istice %1$ds - gost ga skenira pri check-inu.</string>
+    <string name="staffqr_press_to_generate">Pritisnite dugme da generisete kod.</string>
+    <string name="staffqr_generate_button">Generisi QR kod</string>
+    <string name="staffqr_new_code_button">Novi kod</string>
+
+    <!-- AddCafeScreen -->
+    <string name="addcafe_title_hunter">Predlozi kafic</string>
+    <string name="addcafe_title_default">Novi kafic</string>
+    <string name="addcafe_back">Nazad</string>
+    <string name="addcafe_role_hunter_info">Predlog ide administratoru na odobrenje i pojavice se na mapi kada bude prihvacen.</string>
+    <string name="addcafe_role_owner_info">Kafic koji napravite postaje vas, ali ceka odobrenje administratora.</string>
+    <string name="addcafe_role_admin_info">Kao administrator, kafic odmah ide na mapu.</string>
+    <string name="addcafe_label_name">Naziv kafica</string>
+    <string name="addcafe_label_address">Adresa</string>
+    <string name="addcafe_label_city">Grad</string>
+    <string name="addcafe_label_description">Opis</string>
+    <string name="addcafe_label_opening_hours">Radno vreme (npr. 08-23)</string>
+    <string name="addcafe_label_type">Tip</string>
+    <string name="addcafe_label_attributes">Atributi</string>
+    <string name="addcafe_tag_hash">#%1$s</string>
+    <string name="addcafe_label_tags">Jos tagova, odvojeni zarezom</string>
+    <string name="addcafe_label_location">Lokacija</string>
+    <string name="addcafe_button_use_location">Moja lokacija</string>
+    <string name="addcafe_coordinates">%1$s , %2$s</string>
+    <string name="addcafe_map_hint_resolving">Trazim adresu za izabranu tacku...</string>
+    <string name="addcafe_map_hint_default">Dodirnite mapu da postavite pin - adresa i grad se popunjavaju sami, a sve sto sami upisete ostaje netaknuto.</string>
+    <string name="addcafe_button_sending">Salje se...</string>
+    <string name="addcafe_button_submit">Posalji</string>
+
+    <!-- CafeDetailScreen -->
+    <string name="cafedetail_title_fallback">Kafic</string>
+    <string name="cafedetail_back">Nazad</string>
+    <string name="cafedetail_button_checkin">Check-in</string>
+    <string name="cafedetail_section_active_challenges">Aktivni izazovi</string>
+    <string name="cafedetail_challenge_multiplier">x%1$s</string>
+    <string name="cafedetail_section_leave_rating">Ostavi ocenu</string>
+    <string name="cafedetail_placeholder_comment">Komentar (opciono)</string>
+    <string name="cafedetail_button_sending_review">Salje se...</string>
+    <string name="cafedetail_button_submit_review">Posalji ocenu</string>
+    <string name="cafedetail_section_recent_checkins">Poslednji check-inovi</string>
+    <string name="cafedetail_points_awarded">+%1$s</string>
+    <string name="cafedetail_status_pending">na proveri</string>
+    <string name="cafedetail_reviews_count">Recenzije (%1$s)</string>
+    <string name="cafedetail_owner_reply_label">Odgovor vlasnika</string>
+    <string name="cafedetail_rating_summary">★ %1$s (%2$s)</string>
+    <string name="cafedetail_checkin_count">%1$s check-inova</string>
+    <string name="cafedetail_address_line">📍 %1$s</string>
+    <string name="cafedetail_hours_line">🕘 %1$s</string>
+    <string name="cafedetail_type_line">☕ %1$s</string>
+    <string name="cafedetail_tag_hash">#%1$s</string>
+    <string name="cafedetail_tag_separator"> · </string>
+    <string name="cafedetail_top_visitor">👑 Osvajac kafica: %1$s — %2$s poseta</string>
+    <string name="cafedetail_checkin_distance_hint">Za GPS check-in priblizite se na %1$s m.</string>
+
+    <!-- ProfileScreen -->
+    <string name="profile_own_title">Moj profil</string>
+    <string name="profile_logout_content_description">Odjava</string>
+    <string name="profile_other_title">Profil</string>
+    <string name="profile_back_content_description">Nazad</string>
+    <string name="profile_city_champion_crown">👑</string>
+    <string name="profile_username_handle">/@%1$s</string>
+    <string name="profile_username_city_suffix"> · %1$s</string>
+    <string name="profile_banned_message">Nalog je blokiran: %1$s</string>
+    <string name="profile_ban_no_reason">bez obrazlozenja</string>
+    <string name="profile_unfollow_button">Prestani da pratis</string>
+    <string name="profile_follow_button">Zaprati</string>
+    <string name="profile_stat_points_label">poeni</string>
+    <string name="profile_stat_checkins_label">check-inovi</string>
+    <string name="profile_stat_conquered_label">kafica</string>
+    <string name="profile_stat_streak_label">streak</string>
+    <string name="profile_stat_followers_label">prati vas</string>
+    <string name="profile_stat_following_label">pratite</string>
+    <string name="profile_stat_reviews_label">recenzije</string>
+    <string name="profile_stat_longest_streak_label">najduzi</string>
+    <string name="profile_badges_section_title">Bedzevi (%1$d/%2$d)</string>
+    <string name="profile_conquered_cafes_section_title">Osvojeni kafici (%1$d)</string>
+    <string name="profile_cafe_visit_summary">%1$dx · poslednji put %2$s</string>
+    <string name="profile_top_visitor_pill">👑 osvajac</string>
+    <string name="profile_history_section_title">Istorija check-inova</string>
+    <string name="profile_checkin_history_row">%1$s · %2$s</string>
+    <string name="profile_points_awarded_pill">+%1$d</string>
+    <string name="profile_status_flagged_label">na proveri</string>
+    <string name="profile_status_invalidated_label">ponisten</string>
+    <string name="profile_badge_earned_on">Osvojen %1$s</string>
+    <string name="profile_badge_not_earned_yet">Jos nije osvojen</string>
+    <string name="profile_badge_how_to_earn_label">Kako se osvaja</string>
+    <string name="profile_close_button">Zatvori</string>
+
+    <!-- Navigation -->
+    <string name="nav_tab_map">Mapa</string>
+    <string name="nav_tab_leaderboard">Lista</string>
+    <string name="nav_tab_feed">Feed</string>
+    <string name="nav_tab_profile">Profil</string>
+    <string name="nav_tab_owner_cafes">Moji kafici</string>
+    <string name="nav_tab_staff_qr">QR kod</string>
+    <string name="nav_tab_admin_moderation">Moderacija</string>
+
+    <!-- AdminScreen -->
+    <string name="admin_title">Moderacija</string>
+    <string name="admin_tab_cafes">Kafici</string>
+    <string name="admin_tab_checkins">Check-inovi</string>
+    <string name="admin_tab_users">Korisnici</string>
+    <string name="admin_empty_cafes">Nema kafica koji cekaju odobrenje.</string>
+    <string name="admin_list_separator">", "</string>
+    <string name="admin_coordinates">Koordinate: %1$s, %2$s</string>
+    <string name="admin_button_approve">Odobri</string>
+    <string name="admin_button_reject">Odbij</string>
+    <string name="admin_button_details">Detalji</string>
+    <string name="admin_empty_checkins">Nema check-inova pod sumnjom. Sistem ih oznaci automatski.</string>
+    <string name="admin_checkin_user_at_cafe">%1$s @ %2$s</string>
+    <string name="admin_checkin_time_method">%1$s · %2$s</string>
+    <string name="admin_checkin_distance_suffix">" · %1$s"</string>
+    <string name="admin_button_accept">Prihvati</string>
+    <string name="admin_button_cancel">Ponisti</string>
+    <string name="admin_user_username_points">/@%1$s · %2$s</string>
+    <string name="admin_pill_banned">blokiran</string>
+    <string name="admin_button_role">Rola</string>
+    <string name="admin_button_unban">Odblokiraj</string>
+    <string name="admin_button_ban">Blokiraj</string>
+
+    <!-- AuthScreen -->
+    <string name="auth_coffee_emoji">☕</string>
+    <string name="auth_app_name">Coffee Conquest</string>
+    <string name="auth_tagline">Osvajaj kafice po gradu, skupljaj poene, prestigni ekipu.</string>
+    <string name="auth_label_username">Korisnicko ime</string>
+    <string name="auth_label_username_or_email">Korisnicko ime ili email</string>
+    <string name="auth_label_email">Email</string>
+    <string name="auth_label_display_name">Ime i prezime</string>
+    <string name="auth_label_city">Grad (za gradsku listu)</string>
+    <string name="auth_label_password">Lozinka</string>
+    <string name="auth_label_account_type">Tip naloga</string>
+    <string name="auth_role_hunter">Hunter</string>
+    <string name="auth_role_owner">Vlasnik kafica</string>
+    <string name="auth_role_hint">Osoblje i admini dobijaju rolu od administratora.</string>
+    <string name="auth_button_register">Napravi nalog</string>
+    <string name="auth_button_login">Prijavi se</string>
+    <string name="auth_toggle_to_login">Vec imate nalog? Prijavite se</string>
+    <string name="auth_toggle_to_register">Nemate nalog? Registrujte se</string>
+    <string name="auth_demo_accounts">Demo nalozi: marko / vlasnik / konobar / admin, lozinka coffee123</string>
+
+    <!-- Components (common) -->
+    <string name="common_button_retry">Pokusaj ponovo</string>
+    <string name="common_role_hunter">Hunter</string>
+    <string name="common_role_owner">Vlasnik</string>
+    <string name="common_role_staff">Osoblje</string>
+    <string name="common_role_admin">Admin</string>
+    <string name="common_star_rating_content_description">Ocena %1$d</string>
+    <string name="common_level_label">Nivo %1$d</string>
+    <string name="common_level_progress">%1$d / %2$d</string>
+    <string name="common_coffee_emoji">☕</string>
+
+    <!-- MapScreen / OsmMap -->
+    <string name="map_search_placeholder">Pretrazi kafice...</string>
+    <string name="map_content_desc_filters">Filteri</string>
+    <string name="map_location_accuracy"> (~%1$d m)</string>
+    <string name="map_location_label">Lokacija: %1$s%2$s</string>
+    <string name="map_content_desc_toggle_view">Promeni prikaz</string>
+    <string name="map_content_desc_my_location">Moja lokacija</string>
+    <string name="map_content_desc_add_cafe">Predlozi kafic</string>
+    <string name="map_empty_cafes">Nema kafica u krugu od %1$d km. Predlozite novi preko + dugmeta.</string>
+    <string name="map_empty_cafes_filtered">Nema kafica u krugu od %1$d km za izabrane filtere. Predlozite novi preko + dugmeta.</string>
+    <string name="map_rating_star">★ %1$s</string>
+    <string name="map_visits_count">%1$d poseta</string>
+    <string name="map_multiplier_badge">x%1$d</string>
+    <string name="map_rating_with_reviews">★ %1$s (%2$d)</string>
+    <string name="map_checkins_count">%1$d check-inova</string>
+    <string name="map_conquered_count">osvojen %1$dx</string>
+    <string name="map_top_visitor">👑 Osvajac: %1$s (%2$d poseta)</string>
+    <string name="map_button_open_cafe">Otvori kafic</string>
+    <string name="map_filters_title">Filteri</string>
+    <string name="map_button_reset">Ponisti</string>
+    <string name="map_filter_radius_label">Radijus pretrage: %1$s km</string>
+    <string name="map_filter_type_label">Tip</string>
+    <string name="map_filter_all">Svi</string>
+    <string name="map_filter_attributes_label">Atributi</string>
+    <string name="map_filter_tag_hash">#%1$s</string>
+    <string name="map_filter_min_rating_label">Najmanja ocena</string>
+    <string name="map_filter_any_rating">Bilo koja</string>
+    <string name="map_filter_rating_plus">%1$s+</string>
+    <string name="map_filter_author_label">Autor</string>
+    <string name="map_filter_only_mine">Samo moji predlozi</string>
+    <string name="map_filter_author_username_label">Korisnicko ime autora</string>
+    <string name="map_filter_added_label">Dodato</string>
+    <string name="map_button_show_results">Prikazi rezultate</string>
+    <string name="map_marker_you_are_here">Vi ste ovde</string>
+    <string name="map_marker_pick_location">Ovde ide kafic</string>
+    <string name="map_marker_cafe_emoji">☕</string>
+
+    <!-- LeaderboardScreen -->
+    <string name="leaderboard_title">Rang lista</string>
+    <string name="leaderboard_scope_global">Globalno</string>
+    <string name="leaderboard_scope_city_fallback">Grad</string>
+    <string name="leaderboard_scope_friends">Prijatelji</string>
+    <string name="leaderboard_period_all_time">Sve vreme</string>
+    <string name="leaderboard_period_weekly">Ova nedelja</string>
+    <string name="leaderboard_champion_crown_emoji">👑</string>
+    <string name="leaderboard_city_champion_label">Sampion grada %1$s</string>
+    <string name="leaderboard_empty_friends">Jos ne pratite nikoga. Otvorite tudji profil i pritisnite Zaprati.</string>
+    <string name="leaderboard_empty_city">Za ovaj grad jos nema rezultata.</string>
+    <string name="leaderboard_empty_global">Jos niko nije skupio poene.</string>
+    <string name="leaderboard_username_checkins">/@%1$s · %2$d check-inova</string>
+    <string name="leaderboard_level">Nivo %1$d</string>
+
+    <!-- CheckInScreen -->
+    <string name="checkin_title">Check-in</string>
+    <string name="checkin_back">Nazad</string>
+    <string name="checkin_method_section_title">Kako potvrdjujete posetu?</string>
+    <string name="checkin_method_gps">GPS</string>
+    <string name="checkin_method_honor">Bez dokaza</string>
+    <string name="checkin_location_not_read">Lokacija jos nije ocitana.</string>
+    <string name="checkin_distance_in_range">Udaljenost: %1$s — mozete da potvrdite posetu.</string>
+    <string name="checkin_distance_out_of_range">Udaljenost: %1$s — priblizite se na %2$d m.</string>
+    <string name="checkin_location_accuracy_suffix"> (~%1$d m)</string>
+    <string name="checkin_location_source_network">Izvor: %1$s%2$s — ukljucite GPS za precizniju lokaciju.</string>
+    <string name="checkin_location_source_other">Izvor: %1$s%2$s</string>
+    <string name="checkin_button_refresh_location">Osvezi lokaciju</string>
+    <string name="checkin_honor_warning">Bez dokaza vredi upola manje i ide administratoru na proveru pre nego sto poeni budu dodeljeni.</string>
+    <string name="checkin_photo_section_title">Slika kafe (+%1$d poena)</string>
+    <string name="checkin_photo_content_description">Slika kafe</string>
+    <string name="checkin_button_take_photo">  Slikaj kafu</string>
+    <string name="checkin_button_retake_photo">  Slikaj ponovo</string>
+    <string name="checkin_rating_section_title">Ocena (opciono)</string>
+    <string name="checkin_comment_placeholder">Komentar</string>
+    <string name="checkin_score_section_title">Procena poena</string>
+    <string name="checkin_score_base">Osnovni check-in</string>
+    <string name="checkin_score_first_visit">Prvi put ovde</string>
+    <string name="checkin_score_photo">Slika</string>
+    <string name="checkin_score_streak">Streak</string>
+    <string name="checkin_score_challenge">Izazov x%1$s</string>
+    <string name="checkin_total_points">Ukupno: %1$s</string>
+    <string name="checkin_points_positive">+%1$d</string>
+    <string name="checkin_button_submit_sending">Salje se...</string>
+    <string name="checkin_button_submit">Popio sam kafu ☕</string>
+    <string name="checkin_result_emoji">☕</string>
+    <string name="checkin_result_points_pending">Na proveri</string>
+    <string name="checkin_result_total_points">Ukupno %1$d</string>
+    <string name="checkin_result_level">Nivo %1$d</string>
+    <string name="checkin_result_streak">Streak %1$d</string>
+    <string name="checkin_result_flag_reason">Check-in ceka odobrenje: %1$s</string>
+    <string name="checkin_result_new_badges_title">Novi bedzevi</string>
+    <string name="checkin_result_badge_item">%1$s %2$s</string>
+    <string name="checkin_button_done">Gotovo</string>
+
+    <!-- FeedScreen -->
+    <string name="feed_title">Sta se desava</string>
+    <string name="feed_tab_all">Svi</string>
+    <string name="feed_tab_following">Koga pratim</string>
+    <string name="feed_empty_following">Ljudi koje pratite jos nisu nista uradili.</string>
+    <string name="feed_empty_all">Feed je prazan - budite prvi koji ce osvojiti kafic.</string>
+    <string name="feed_points_positive">+%1$d</string>
+    <string name="feed_badge_challenge">izazov</string>
 </resources>

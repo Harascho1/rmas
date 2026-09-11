@@ -25,14 +25,11 @@ import rs.coffeeconquest.shared.rules.Validation
 
 class CafeSource(private val challenges: ChallengeSource) {
     companion object {
-        /** Ceiling on documents pulled for one map screen, however narrow the filter. */
         const val MAX_FETCH = 300L
 
-        /** A uid no document can have, used to make an unknown author match nothing. */
         private const val NO_SUCH_AUTHOR = "\u0000-no-such-author"
     }
 
-    /** One reading of what is around a point, for a caller that only wants it once. */
     suspend fun nearby(
         latitude: Double?,
         longitude: Double?,
@@ -77,7 +74,6 @@ class CafeSource(private val challenges: ChallengeSource) {
     ): Pair<Query, Geo.BoundingBox?> {
         val base = Fire.cafes().whereEqualTo("status", CafeStatus.APPROVED.name)
 
-        // A narrowed search throws more away, so it has to start from a wider net.
         val fetchLimit = (limit * if (filter.isActive) 10L else 4L).coerceAtMost(MAX_FETCH)
 
         return when {
@@ -129,7 +125,6 @@ class CafeSource(private val challenges: ChallengeSource) {
                     ignoreCase = true
                 )
             }
-            // tip
             .filter { doc ->
                 filter.type == null || doc.enum(
                     "type",
@@ -309,8 +304,6 @@ class CafeSource(private val challenges: ChallengeSource) {
         if (!isOwner && !isStaff) throw AppException("Ovaj kafic nije vas.")
     }
 
-    // --------------------------------------------------------------- reviews
-
     suspend fun reviews(cafeId: String, limit: Int = 50): List<Review> =
         Fire.reviews(cafeId)
             .orderBy("createdAt", Query.Direction.DESCENDING)
@@ -389,8 +382,6 @@ class CafeSource(private val challenges: ChallengeSource) {
         return ref.fetch().toReview()
     }
 
-    // ----------------------------------------------------------- owner stats
-
     suspend fun stats(cafeId: String, actor: DocumentSnapshot): CafeStats {
         assertCanManage(cafeId, actor)
 
@@ -432,8 +423,6 @@ class CafeSource(private val challenges: ChallengeSource) {
             topVisitors = topVisitors(cafeId, 5),
         )
     }
-
-    // -------------------------------------------------------------- visitors
 
     suspend fun topVisitors(cafeId: String, limit: Int): List<CafeConqueror> =
         Fire.visitors(cafeId)

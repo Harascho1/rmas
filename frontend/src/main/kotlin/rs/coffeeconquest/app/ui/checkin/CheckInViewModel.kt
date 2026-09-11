@@ -27,7 +27,6 @@ data class CheckInUiState(
     val method: CheckInMethod = CheckInMethod.GPS,
     val fix: LocationFix? = null,
     val photo: Bitmap? = null,
-    val qrToken: String? = null,
     val note: String = "",
     val rating: Int = 0,
     val comment: String = "",
@@ -44,7 +43,6 @@ data class CheckInUiState(
 
     val inRange: Boolean get() = (distanceMeters ?: Double.MAX_VALUE) <= Geo.MAX_CHECKIN_DISTANCE_M
 
-    /** Live preview using the same rules the server will apply. */
     val preview: ScoreRules.ScoreBreakdown
         get() {
             val cafe = (cafe as? UiState.Ready)?.data
@@ -60,7 +58,7 @@ data class CheckInUiState(
     val canSubmit: Boolean
         get() = !submitting && when (method) {
             CheckInMethod.GPS -> inRange
-            CheckInMethod.QR -> qrToken != null
+            CheckInMethod.QR -> false
             CheckInMethod.HONOR -> true
         }
 }
@@ -93,14 +91,6 @@ class CheckInViewModel(
     fun onRatingChange(value: Int) = _state.update { it.copy(rating = value) }
     fun onCommentChange(value: String) = _state.update { it.copy(comment = value) }
 
-    fun onQrScanned(token: String?) {
-        if (token.isNullOrBlank()) {
-            _state.update { it.copy(error = "QR kod nije procitan.") }
-        } else {
-            _state.update { it.copy(qrToken = token, method = CheckInMethod.QR, error = null) }
-        }
-    }
-
     fun refreshLocation() {
         viewModelScope.launch {
             val fix = location.current()
@@ -113,7 +103,6 @@ class CheckInViewModel(
         viewModelScope.launch {
             _state.update { it.copy(submitting = true, error = null) }
 
-            // The photo is uploaded first; the check-in then references it by id.
             val photoId = current.photo?.let { bitmap ->
                 runCatching { repository.uploadPhoto(bitmap.toJpegBytes()) }
                     .getOrElse { error ->
@@ -129,7 +118,6 @@ class CheckInViewModel(
                         method = current.method,
                         latitude = current.fix?.latitude,
                         longitude = current.fix?.longitude,
-                        qrToken = current.qrToken,
                         photoId = photoId,
                         note = current.note.takeIf { it.isNotBlank() },
                         rating = current.rating.takeIf { it > 0 },

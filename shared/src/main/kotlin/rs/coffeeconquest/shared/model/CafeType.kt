@@ -2,10 +2,6 @@ package rs.coffeeconquest.shared.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * What kind of place a POI is. Stored as the enum name on the cafe document and
- * used as the "tip" filter on the map.
- */
 @Serializable
 enum class CafeType(val label: String) {
     KAFIC("Kafic"),
@@ -16,13 +12,6 @@ enum class CafeType(val label: String) {
     OSTALO("Ostalo"),
 }
 
-/**
- * The suggested attribute vocabulary ("atributi").
- *
- * Tags stay free-form so a hunter can add anything, but the app offers this list
- * both when proposing a cafe and when filtering, so the common ones stay
- * spelled consistently and are actually findable.
- */
 object CafeAttributes {
 
     const val WIFI = "wifi"

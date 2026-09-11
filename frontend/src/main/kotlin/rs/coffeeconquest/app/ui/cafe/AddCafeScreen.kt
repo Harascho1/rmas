@@ -34,9 +34,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.map.OsmMap
 import rs.coffeeconquest.shared.dto.UserProfile
 import rs.coffeeconquest.shared.model.CafeAttributes
@@ -59,10 +61,18 @@ fun AddCafeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (profile.role == Role.HUNTER) "Predlozi kafic" else "Novi kafic") },
+                title = {
+                    Text(
+                        if (profile.role == Role.HUNTER) {
+                            stringResource(R.string.addcafe_title_hunter)
+                        } else {
+                            stringResource(R.string.addcafe_title_default)
+                        },
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Nazad")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.addcafe_back))
                     }
                 },
             )
@@ -78,9 +88,9 @@ fun AddCafeScreen(
         ) {
             Text(
                 when (profile.role) {
-                    Role.HUNTER -> "Predlog ide administratoru na odobrenje i pojavice se na mapi kada bude prihvacen."
-                    Role.OWNER -> "Kafic koji napravite postaje vas, ali ceka odobrenje administratora."
-                    else -> "Kao administrator, kafic odmah ide na mapu."
+                    Role.HUNTER -> stringResource(R.string.addcafe_role_hunter_info)
+                    Role.OWNER -> stringResource(R.string.addcafe_role_owner_info)
+                    else -> stringResource(R.string.addcafe_role_admin_info)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -89,39 +99,39 @@ fun AddCafeScreen(
             OutlinedTextField(
                 value = state.name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text("Naziv kafica") },
+                label = { Text(stringResource(R.string.addcafe_label_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = state.address,
                 onValueChange = viewModel::onAddressChange,
-                label = { Text("Adresa") },
+                label = { Text(stringResource(R.string.addcafe_label_address)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = state.city,
                 onValueChange = viewModel::onCityChange,
-                label = { Text("Grad") },
+                label = { Text(stringResource(R.string.addcafe_label_city)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = state.description,
                 onValueChange = viewModel::onDescriptionChange,
-                label = { Text("Opis") },
+                label = { Text(stringResource(R.string.addcafe_label_description)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
             )
             OutlinedTextField(
                 value = state.openingHours,
                 onValueChange = viewModel::onOpeningHoursChange,
-                label = { Text("Radno vreme (npr. 08-23)") },
+                label = { Text(stringResource(R.string.addcafe_label_opening_hours)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
-            Text("Tip", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.addcafe_label_type), style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CafeType.entries.forEach { type ->
                     FilterChip(
@@ -132,13 +142,13 @@ fun AddCafeScreen(
                 }
             }
 
-            Text("Atributi", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.addcafe_label_attributes), style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CafeAttributes.all.forEach { tag ->
                     FilterChip(
                         selected = tag in state.attributes,
                         onClick = { viewModel.toggleAttribute(tag) },
-                        label = { Text("#$tag") },
+                        label = { Text(stringResource(R.string.addcafe_tag_hash, tag)) },
                     )
                 }
             }
@@ -146,12 +156,12 @@ fun AddCafeScreen(
             OutlinedTextField(
                 value = state.tags,
                 onValueChange = viewModel::onTagsChange,
-                label = { Text("Jos tagova, odvojeni zarezom") },
+                label = { Text(stringResource(R.string.addcafe_label_tags)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Text("Lokacija", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.addcafe_label_location), style = MaterialTheme.typography.titleSmall)
             OsmMap(
                 center = state.mapCenter,
                 cafes = emptyList(),
@@ -172,20 +182,19 @@ fun AddCafeScreen(
                 OutlinedButton(onClick = viewModel::useCurrentLocation) {
                     Icon(Icons.Filled.MyLocation, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Moja lokacija")
+                    Text(stringResource(R.string.addcafe_button_use_location))
                 }
                 Text(
-                    "${state.latitude.format()} , ${state.longitude.format()}",
+                    stringResource(R.string.addcafe_coordinates, state.latitude.format(), state.longitude.format()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 if (state.resolvingAddress) {
-                    "Trazim adresu za izabranu tacku..."
+                    stringResource(R.string.addcafe_map_hint_resolving)
                 } else {
-                    "Dodirnite mapu da postavite pin - adresa i grad se popunjavaju sami, " +
-                        "a sve sto sami upisete ostaje netaknuto."
+                    stringResource(R.string.addcafe_map_hint_default)
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -202,7 +211,7 @@ fun AddCafeScreen(
                     .fillMaxWidth()
                     .height(50.dp),
             ) {
-                Text(if (state.submitting) "Salje se..." else "Posalji")
+                Text(if (state.submitting) stringResource(R.string.addcafe_button_sending) else stringResource(R.string.addcafe_button_submit))
             }
         }
     }

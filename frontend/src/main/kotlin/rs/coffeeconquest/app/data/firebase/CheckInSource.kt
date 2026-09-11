@@ -42,7 +42,6 @@ class CheckInSource(
         val cafeLat = cafe.double("latitude")
         val cafeLon = cafe.double("longitude")
 
-        // The per-cafe visitor row answers both the cooldown and "have I been here".
         val visitorRef = Fire.visitors(request.cafeId).document(uid)
         val visitor = visitorRef.fetch()
         assertCooldown(visitor, now)
@@ -65,7 +64,6 @@ class CheckInSource(
 
         val flagReason = flagReason(request, overLimit, uid, cafeLat, cafeLon, now)
         val status = if (flagReason == null) CheckInStatus.VALID else CheckInStatus.FLAGGED
-        // A flagged check-in still shows up, but it earns nothing until a moderator clears it.
         val awarded = if (status == CheckInStatus.VALID) breakdown.total else 0
 
         val checkInRef = Fire.checkIns().document()
@@ -105,8 +103,6 @@ class CheckInSource(
                 },
             )
 
-            // Two mirrored counters: one per cafe (who conquered it) and one per
-            // user (my conquest map). Both are single-document reads later.
             set(
                 visitorRef,
                 mapOf(
@@ -130,9 +126,6 @@ class CheckInSource(
                 com.google.firebase.firestore.SetOptions.merge(),
             )
 
-            // The cafe carries its leading hunter so a screenful of pins needs no
-            // extra queries. Visit counts only ever grow, so whoever passes the
-            // stored figure is the new "osvajac".
             val myVisits = visitor.int("visits") + 1
             val cafeUpdates = buildMap<String, Any?> {
                 put("checkInCount", FieldValue.increment(1))
@@ -191,8 +184,6 @@ class CheckInSource(
             newBadges = earned,
         )
     }
-
-    // ------------------------------------------------------------ anti-cheat
 
     private fun assertCooldown(visitor: DocumentSnapshot, now: Long) {
         if (!visitor.exists()) return
@@ -277,8 +268,6 @@ class CheckInSource(
         }
     }
 
-    // ------------------------------------------------------------- QR tokens
-
     suspend fun issueQrToken(cafeId: String, actor: DocumentSnapshot): QrTokenResponse {
         cafes.assertCanManage(cafeId, actor)
 
@@ -315,8 +304,6 @@ class CheckInSource(
             throw AppException("QR kod je istekao, zamolite osoblje za novi.")
         }
     }
-
-    // --------------------------------------------------------------- queries
 
     suspend fun byUser(userId: String, limit: Int): List<CheckIn> =
         Fire.checkIns()

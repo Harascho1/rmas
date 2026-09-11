@@ -3,7 +3,6 @@ package rs.coffeeconquest.shared.dto
 import kotlinx.serialization.Serializable
 import rs.coffeeconquest.shared.model.Role
 
-/** The signed-in user, or another hunter's public profile. */
 @Serializable
 data class UserProfile(
     val id: String,
@@ -21,12 +20,10 @@ data class UserProfile(
     val reviewCount: Int = 0,
     val followerCount: Int = 0,
     val followingCount: Int = 0,
-    /** True while this user tops the weekly leaderboard of their city. */
     val isCityChampion: Boolean = false,
     val isBanned: Boolean = false,
     val banReason: String? = null,
     val createdAtEpochMs: Long = 0,
-    /** Only set when someone else is looking at this profile. */
     val isFollowedByMe: Boolean = false,
 )
 
@@ -50,7 +47,6 @@ data class EarnedBadge(
 data class UserStats(
     val profile: UserProfile,
     val badges: List<EarnedBadge>,
-    /** Cafes the user has checked into at least once - the "conquered map". */
     val conquered: List<ConqueredCafe>,
 )
 
@@ -62,6 +58,5 @@ data class ConqueredCafe(
     val longitude: Double,
     val visits: Int,
     val lastVisitEpochMs: Long,
-    /** True when this user has more check-ins here than anyone else. */
     val isTopVisitor: Boolean,
 )

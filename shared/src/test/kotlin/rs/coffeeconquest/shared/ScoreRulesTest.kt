@@ -62,7 +62,6 @@ class ScoreRulesTest {
         assertEquals(1, ScoreRules.levelFor(0))
         assertEquals(1, ScoreRules.levelFor(ScoreRules.LEVEL_STEP - 1))
         assertEquals(2, ScoreRules.levelFor(ScoreRules.LEVEL_STEP))
-        // Level 3 starts at 100 + 200 points.
         assertEquals(3, ScoreRules.levelFor(300))
 
         val progress = ScoreRules.levelProgress(150)

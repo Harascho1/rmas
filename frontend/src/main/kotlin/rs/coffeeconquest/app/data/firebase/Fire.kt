@@ -18,8 +18,6 @@ object Fire {
     val uid: String? get() = auth.currentUser?.uid
     fun requireUid(): String = uid ?: throw AppException("Niste prijavljeni.")
 
-    // ------------------------------------------------------------ collections
-
     fun users() = db.collection("users")
     fun user(uid: String) = users().document(uid)
     fun usernames() = db.collection("usernames")
@@ -39,8 +37,6 @@ object Fire {
 }
 
 class AppException(message: String, cause: Throwable? = null) : Exception(message, cause)
-
-// ------------------------------------------------------------------ helpers
 
 suspend fun Query.fetch(): List<DocumentSnapshot> = get().await().documents
 

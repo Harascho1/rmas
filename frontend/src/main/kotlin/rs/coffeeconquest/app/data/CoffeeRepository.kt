@@ -52,8 +52,6 @@ class CoffeeRepository(
         return snapshot
     }
 
-    // ------------------------------------------------------------------ auth
-
     suspend fun register(request: RegisterRequest): UserProfile = auth.register(request)
 
     suspend fun login(usernameOrEmail: String, password: String): UserProfile =
@@ -66,10 +64,7 @@ class CoffeeRepository(
 
     fun logout() = auth.logout()
 
-    /** Firebase Auth persists the session itself, so this survives a restart. */
     fun isSignedIn(): Boolean = auth.isSignedIn()
-
-    // ----------------------------------------------------------------- cafes
 
     suspend fun cafes(
         latitude: Double? = null,
@@ -116,8 +111,6 @@ class CoffeeRepository(
     suspend fun assignStaff(cafeId: String, userId: String) =
         cafeSource.assignStaff(cafeId, userId, actor())
 
-    // ------------------------------------------------------------- check-ins
-
     suspend fun checkIn(request: CreateCheckInRequest): CheckInResult =
         checkInSource.create(request)
 
@@ -130,16 +123,10 @@ class CoffeeRepository(
     suspend fun qrToken(cafeId: String): QrTokenResponse =
         checkInSource.issueQrToken(cafeId, actor())
 
-    // ----------------------------------------------------------------- media
-
-    /** Returns the photo id to store on a cafe, check-in or profile. */
     suspend fun uploadPhoto(bytes: ByteArray, fileName: String = "photo.jpg"): String =
         photos.upload(bytes, fileName)
 
-    /** The stored image bytes, or null when the photo is missing. */
     suspend fun photo(photoId: String): ByteArray? = photos.load(photoId)
-
-    // ---------------------------------------------------------------- social
 
     suspend fun leaderboard(
         scope: LeaderboardScope,
@@ -165,8 +152,6 @@ class CoffeeRepository(
     suspend fun follow(userId: String, follow: Boolean): FollowResponse =
         social.follow(userId, follow)
 
-    // ------------------------------------------------------------ challenges
-
     suspend fun challenges(city: String? = null, cafeId: String? = null): List<Challenge> =
         challengeSource.list(city, cafeId, onlyActive = true)
 
@@ -191,8 +176,6 @@ class CoffeeRepository(
             throw AppException("Izazov za ceo grad moze da napravi samo gradski sampion.")
         }
     }
-
-    // ----------------------------------------------------------------- admin
 
     suspend fun pendingCafes(): List<Cafe> = cafeSource.pending()
 

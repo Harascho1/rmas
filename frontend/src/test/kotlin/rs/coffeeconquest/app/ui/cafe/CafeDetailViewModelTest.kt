@@ -47,7 +47,6 @@ class CafeDetailViewModelTest {
         assertEquals(1, viewModel.state.value.recentCheckIns.size)
     }
 
-    /** With a fix the cafe can be told how far away it is; without one it cannot. */
     @Test
     fun `a location fix is passed to the query`() {
         coEvery { location.current(any(), any()) } returns LocationFix(
@@ -72,7 +71,6 @@ class CafeDetailViewModelTest {
         coVerify { repository.cafe("c1", null, null) }
     }
 
-    /** Reviews and check-ins are secondary: a missing cafe must not hide the error. */
     @Test
     fun `a missing cafe becomes an error`() {
         coEvery { repository.cafe(any(), any(), any()) } throws AppException("Kafic ne postoji.")
@@ -111,7 +109,6 @@ class CafeDetailViewModelTest {
         coVerify(exactly = 2) { repository.cafe("c1", any(), any()) }
     }
 
-    /** A rating with no words is a rating, not an empty comment. */
     @Test
     fun `a blank comment is sent as null`() {
         val viewModel = CafeDetailViewModel(repository, location)

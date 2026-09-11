@@ -47,10 +47,6 @@ class MapViewModelTest {
         assertEquals(listOf(kafeteriJa, bigmaJa), viewModel.state.value.cafes.dataOrNull)
     }
 
-    /**
-     * The point of the whole Flow refactor: nobody calls load() a second time,
-     * the data layer pushes and the screen follows.
-     */
     @Test
     fun `a later emission reaches the screen with no second call`() {
         val stream = MutableSharedFlow<List<Cafe>>(replay = 1)
@@ -129,7 +125,6 @@ class MapViewModelTest {
         assertEquals(false, filter.isActive)
     }
 
-    /** Every search goes through the same stream, whatever the filter says. */
     private fun streamsBack(stream: kotlinx.coroutines.flow.Flow<List<Cafe>>) {
         every {
             repository.cafesStream(any(), any(), any(), any(), any(), any())

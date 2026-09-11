@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -59,15 +60,15 @@ private fun SignedInApp(session: SessionState.SignedIn, sessionViewModel: Sessio
 
     Scaffold(
         bottomBar = {
-            // Detail screens are full-screen: the bar only shows on the top-level tabs.
             if (currentRoute in tabs.map { it.route }) {
                 NavigationBar {
                     tabs.forEach { tab ->
+                        val tabLabel = stringResource(tab.labelRes)
                         NavigationBarItem(
                             selected = currentRoute == tab.route,
                             onClick = { navController.switchTab(tab.route) },
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
+                            icon = { Icon(tab.icon, contentDescription = tabLabel) },
+                            label = { Text(tabLabel, style = MaterialTheme.typography.labelSmall) },
                         )
                     }
                 }
@@ -186,7 +187,6 @@ private fun SignedInApp(session: SessionState.SignedIn, sessionViewModel: Sessio
     }
 }
 
-/** Standard bottom-bar behaviour: one entry per tab, state preserved between switches. */
 private fun NavHostController.switchTab(route: String) {
     navigate(route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }

@@ -60,7 +60,6 @@ class AuthViewModelTest {
         assertEquals(false, viewModel.state.value.submitting)
     }
 
-    /** Validation runs before the network, so a short password never leaves the phone. */
     @Test
     fun `an invalid form is never sent`() {
         val viewModel = AuthViewModel(repository)

@@ -26,7 +26,6 @@ data class AuthUiState(
     val submitting: Boolean = false,
     val error: String? = null,
 ) {
-    /** Client-side mirror of the server rules, so the button disables before a round trip. */
     val validationError: String?
         get() = if (!register) {
             when {

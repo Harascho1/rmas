@@ -15,11 +15,6 @@ import rs.coffeeconquest.shared.model.CheckInStatus
 import rs.coffeeconquest.shared.model.FeedEventType
 import rs.coffeeconquest.shared.model.Role
 
-/**
- * Test data every ViewModel test draws from, so a test body only spells out the
- * one field it is actually about.
- */
-
 fun cafe(
     id: String = "c1",
     name: String = "Kafeterija",

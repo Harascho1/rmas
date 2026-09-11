@@ -22,10 +22,8 @@ data class LeaderboardEntry(
 data class LeaderboardResponse(
     val scope: LeaderboardScope,
     val city: String? = null,
-    /** Null when the leaderboard covers all time. */
     val sinceEpochMs: Long? = null,
     val entries: List<LeaderboardEntry>,
-    /** The signed-in user's row, even when it falls outside the returned page. */
     val me: LeaderboardEntry? = null,
 )
 

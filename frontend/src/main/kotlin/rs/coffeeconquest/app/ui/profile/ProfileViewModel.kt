@@ -63,7 +63,6 @@ class ProfileViewModel(
     private val photoStore = PhotoStore(repository, viewModelScope)
     val photos: StateFlow<Map<String, ImageBitmap>> = photoStore.photos
 
-    /** The UI reports which photo scrolled into view; fetching it is this ViewModel's job. */
     fun requestPhoto(photoId: String?) = photoStore.load(photoId)
 
     private var userId: String = ""

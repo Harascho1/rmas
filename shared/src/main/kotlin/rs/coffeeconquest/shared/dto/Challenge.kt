@@ -19,7 +19,6 @@ data class Challenge(
     val createdByDisplayName: String,
     val active: Boolean,
 ) {
-    /** True when this challenge boosts [cafe] - either directly, or through its city. */
     fun appliesTo(cafe: Cafe): Boolean = when (scope) {
         ChallengeScope.CAFE -> cafeId == cafe.id
         ChallengeScope.CITY -> city != null && city.equals(cafe.city, ignoreCase = true)
@@ -29,9 +28,7 @@ data class Challenge(
 @Serializable
 data class CreateChallengeRequest(
     val scope: ChallengeScope,
-    /** Required for [ChallengeScope.CAFE]. */
     val cafeId: String? = null,
-    /** Required for [ChallengeScope.CITY]. */
     val city: String? = null,
     val title: String,
     val description: String? = null,

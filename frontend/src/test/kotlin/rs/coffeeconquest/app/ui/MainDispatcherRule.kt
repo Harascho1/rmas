@@ -8,11 +8,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 
-/**
- * viewModelScope runs on Dispatchers.Main, which exists only on a device. This
- * swaps it for a dispatcher that runs each coroutine eagerly on the calling
- * thread, so a test can assert immediately after the call that started one.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainDispatcherRule : TestWatcher() {
 

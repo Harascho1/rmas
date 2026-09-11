@@ -18,7 +18,6 @@ class CafeFilterTest {
 
     @Test
     fun `free text alone does not count as a filter`() {
-        // The search box is always visible, so it must not light up the badge.
         val filter = CafeFilter(query = "dorcol")
         assertFalse(filter.isActive)
         assertEquals(0, filter.activeCount)
@@ -33,7 +32,6 @@ class CafeFilterTest {
             addedWithinDays = 30,
             minRating = 4.0,
         )
-        // Attributes count as one choice however many tags are picked.
         assertEquals(5, filter.activeCount)
         assertTrue(filter.isActive)
     }

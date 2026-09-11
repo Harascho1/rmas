@@ -9,7 +9,6 @@ private val serbian: Locale = Locale.forLanguageTag("sr-RS")
 private val dayFormat = SimpleDateFormat("d. MMM", serbian)
 private val dateTimeFormat = SimpleDateFormat("d. MMM yyyy. HH:mm", serbian)
 
-/** "pre 5 min" / "juce" - short enough for a feed row. */
 fun relativeTime(epochMs: Long): String {
     val diff = System.currentTimeMillis() - epochMs
     val minutes = diff / 60_000
@@ -29,7 +28,6 @@ fun formatDateTime(epochMs: Long): String = dateTimeFormat.format(Date(epochMs))
 
 fun formatDay(epochMs: Long): String = dayFormat.format(Date(epochMs))
 
-/** "120 m" up close, "1.4 km" further out. */
 fun formatDistance(meters: Double?): String? = when {
     meters == null -> null
     meters < 1000 -> "${meters.roundToInt()} m"
@@ -39,7 +37,6 @@ fun formatDistance(meters: Double?): String? = when {
 fun formatRating(rating: Double): String =
     if (rating <= 0.0) "-" else String.format(serbian, "%.1f", rating)
 
-/** Serbian plural forms: 1 poen, 2 poena, 5 poena. */
 fun points(value: Int): String {
     val mod100 = value % 100
     val mod10 = value % 10

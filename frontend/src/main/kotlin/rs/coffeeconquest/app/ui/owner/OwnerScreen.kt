@@ -25,9 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.common.EmptyBox
 import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.StateContent
@@ -46,10 +48,10 @@ fun OwnerScreen(
     LaunchedEffect(Unit) { viewModel.load() }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Moji kafici") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.owner_title)) }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddCafe) {
-                Icon(Icons.Filled.Add, contentDescription = "Dodaj kafic")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.owner_add_cafe))
             }
         },
     ) { padding ->
@@ -59,7 +61,7 @@ fun OwnerScreen(
             modifier = Modifier.padding(padding),
         ) { cafes ->
             if (cafes.isEmpty()) {
-                EmptyBox("Jos nemate nijedan kafic. Dodajte ga preko + dugmeta - administrator ga zatim odobrava.")
+                EmptyBox(stringResource(R.string.owner_empty_cafes))
             } else {
                 LazyColumn(
                     modifier = Modifier.padding(padding),
@@ -78,21 +80,21 @@ fun OwnerScreen(
                                 Spacer(Modifier.height(10.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     when (cafe.status) {
-                                        CafeStatus.APPROVED -> Pill("na mapi")
+                                        CafeStatus.APPROVED -> Pill(stringResource(R.string.owner_status_approved))
                                         CafeStatus.PENDING -> Pill(
-                                            "ceka odobrenje",
+                                            stringResource(R.string.owner_status_pending),
                                             background = MaterialTheme.colorScheme.errorContainer,
                                             foreground = MaterialTheme.colorScheme.onErrorContainer,
                                         )
                                         CafeStatus.REJECTED -> Pill(
-                                            "odbijen",
+                                            stringResource(R.string.owner_status_rejected),
                                             background = MaterialTheme.colorScheme.errorContainer,
                                             foreground = MaterialTheme.colorScheme.onErrorContainer,
                                         )
                                     }
-                                    Pill("★ ${formatRating(cafe.averageRating)}")
-                                    Pill("${cafe.checkInCount} poseta")
-                                    if (cafe.activeChallenges.isNotEmpty()) Pill("izazov aktivan")
+                                    Pill(stringResource(R.string.owner_rating_format, formatRating(cafe.averageRating)))
+                                    Pill(stringResource(R.string.owner_visits_format, cafe.checkInCount))
+                                    if (cafe.activeChallenges.isNotEmpty()) Pill(stringResource(R.string.owner_challenge_active))
                                 }
                             }
                         }

@@ -91,11 +91,7 @@ class MapViewModel(
         }
     }
 
-    // ---------------------------------------------------------------- search
-
     fun onQueryChange(value: String) = updateFilter { it.copy(query = value) }
-
-    // --------------------------------------------------------------- filters
 
     fun openFilters() = _state.update { it.copy(filterSheetOpen = true) }
 
@@ -123,13 +119,10 @@ class MapViewModel(
 
     fun onMinRatingChange(rating: Double?) = updateFilter { it.copy(minRating = rating) }
 
-    /** Clears every narrowing choice but keeps the text the user typed. */
     fun resetFilters() = _state.update { it.copy(filter = CafeFilter(query = it.filter.query)) }
 
     private fun updateFilter(transform: (CafeFilter) -> CafeFilter) =
         _state.update { it.copy(filter = transform(it.filter)) }
-
-    // ---------------------------------------------------------------- radius
 
     fun onRadiusChange(meters: Double) = _state.update { it.copy(radiusMeters = meters) }
 

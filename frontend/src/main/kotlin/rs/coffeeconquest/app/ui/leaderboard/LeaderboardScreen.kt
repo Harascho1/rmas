@@ -34,10 +34,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.common.Avatar
 import rs.coffeeconquest.app.ui.common.EmptyBox
 import rs.coffeeconquest.app.ui.common.Pill
@@ -61,16 +63,16 @@ fun LeaderboardScreen(
     LaunchedEffect(profile.id) { viewModel.start(profile.city) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Rang lista") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.leaderboard_title)) }) },
     ) { padding ->
         Column(Modifier
             .fillMaxSize()
             .padding(padding)) {
 
             val scopes = listOf(
-                LeaderboardScope.GLOBAL to "Globalno",
-                LeaderboardScope.CITY to (profile.city ?: "Grad"),
-                LeaderboardScope.FRIENDS to "Prijatelji",
+                LeaderboardScope.GLOBAL to stringResource(R.string.leaderboard_scope_global),
+                LeaderboardScope.CITY to (profile.city ?: stringResource(R.string.leaderboard_scope_city_fallback)),
+                LeaderboardScope.FRIENDS to stringResource(R.string.leaderboard_scope_friends),
             )
             PrimaryTabRow(selectedTabIndex = scopes.indexOfFirst { it.first == state.scope }) {
                 scopes.forEach { (scope, label) ->
@@ -91,12 +93,12 @@ fun LeaderboardScreen(
                 FilterChip(
                     selected = !state.weekly,
                     onClick = { viewModel.onPeriodChange(false) },
-                    label = { Text("Sve vreme") },
+                    label = { Text(stringResource(R.string.leaderboard_period_all_time)) },
                 )
                 FilterChip(
                     selected = state.weekly,
                     onClick = { viewModel.onPeriodChange(true) },
-                    label = { Text("Ova nedelja") },
+                    label = { Text(stringResource(R.string.leaderboard_period_weekly)) },
                 )
             }
 
@@ -110,11 +112,11 @@ fun LeaderboardScreen(
                     ),
                 ) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("👑", style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(R.string.leaderboard_champion_crown_emoji), style = MaterialTheme.typography.titleLarge)
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Sampion grada ${state.champion?.city}",
+                                stringResource(R.string.leaderboard_city_champion_label, state.champion?.city.toString()),
                                 style = MaterialTheme.typography.labelLarge,
                             )
                             Text(champion.displayName, style = MaterialTheme.typography.titleMedium)
@@ -128,9 +130,9 @@ fun LeaderboardScreen(
                 if (board.entries.isEmpty()) {
                     EmptyBox(
                         when (state.scope) {
-                            LeaderboardScope.FRIENDS -> "Jos ne pratite nikoga. Otvorite tudji profil i pritisnite Zaprati."
-                            LeaderboardScope.CITY -> "Za ovaj grad jos nema rezultata."
-                            LeaderboardScope.GLOBAL -> "Jos niko nije skupio poene."
+                            LeaderboardScope.FRIENDS -> stringResource(R.string.leaderboard_empty_friends)
+                            LeaderboardScope.CITY -> stringResource(R.string.leaderboard_empty_city)
+                            LeaderboardScope.GLOBAL -> stringResource(R.string.leaderboard_empty_global)
                         },
                     )
                 } else {
@@ -150,7 +152,6 @@ fun LeaderboardScreen(
                             )
                         }
 
-                        // The signed-in user always sees their own row, even outside the top 50.
                         val me = board.me
                         if (me != null && board.entries.none { it.isMe }) {
                             item {
@@ -204,14 +205,14 @@ private fun LeaderboardRow(entry: LeaderboardEntry, avatar: ImageBitmap?, onClic
             Column(Modifier.weight(1f)) {
                 Text(entry.displayName, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "@${entry.username} · ${entry.checkInCount} check-inova",
+                    stringResource(R.string.leaderboard_username_checkins, entry.username, entry.checkInCount),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(points(entry.points), style = MaterialTheme.typography.titleMedium)
-                Pill("Nivo ${entry.level}")
+                Pill(stringResource(R.string.leaderboard_level, entry.level))
             }
         }
     }

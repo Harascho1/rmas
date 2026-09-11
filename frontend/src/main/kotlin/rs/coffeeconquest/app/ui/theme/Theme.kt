@@ -11,7 +11,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Espresso browns with a warm crema accent - the app should look like the thing it is about.
 private val Espresso = Color(0xFF4E342E)
 private val EspressoDark = Color(0xFF2E1B16)
 private val Crema = Color(0xFFD7A86E)

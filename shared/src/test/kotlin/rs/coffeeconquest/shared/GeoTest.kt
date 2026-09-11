@@ -22,7 +22,6 @@ class GeoTest {
 
     @Test
     fun `a hundred meters away is still in check-in range`() {
-        // ~0.0009 degrees of latitude is about 100 m.
         val meters = Geo.distanceMeters(44.8189, 20.4562, 44.8198, 20.4562)
         assertTrue(meters < Geo.MAX_CHECKIN_DISTANCE_M, "bilo je $meters m")
     }

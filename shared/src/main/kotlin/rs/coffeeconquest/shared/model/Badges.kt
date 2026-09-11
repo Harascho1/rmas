@@ -2,17 +2,11 @@ package rs.coffeeconquest.shared.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * Badge catalogue. Only the code is stored in Firestore; the human-readable
- * text lives here, so a badge means the same thing everywhere it is shown.
- */
 @Serializable
 data class BadgeDefinition(
     val code: String,
     val title: String,
-    /** What the badge stands for, past tense - what the holder has done. */
     val description: String,
-    /** The same rule as an instruction, for someone who has not earned it yet. */
     val requirement: String,
     val emoji: String,
 )

@@ -39,8 +39,10 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.UiState
 import rs.coffeeconquest.app.ui.of
 import rs.coffeeconquest.shared.model.Role
@@ -67,7 +69,7 @@ fun ErrorBox(message: String, onRetry: (() -> Unit)? = null, modifier: Modifier 
             )
             if (onRetry != null) {
                 Spacer(Modifier.height(12.dp))
-                Button(onClick = onRetry) { Text("Pokusaj ponovo") }
+                Button(onClick = onRetry) { Text(stringResource(R.string.common_button_retry)) }
             }
         }
     }
@@ -144,10 +146,10 @@ fun Pill(
 @Composable
 fun RoleChip(role: Role, modifier: Modifier = Modifier) {
     val (label, color) = when (role) {
-        Role.HUNTER -> "Hunter" to MaterialTheme.colorScheme.secondaryContainer
-        Role.OWNER -> "Vlasnik" to MaterialTheme.colorScheme.primaryContainer
-        Role.STAFF -> "Osoblje" to MaterialTheme.colorScheme.tertiaryContainer
-        Role.ADMIN -> "Admin" to MaterialTheme.colorScheme.errorContainer
+        Role.HUNTER -> stringResource(R.string.common_role_hunter) to MaterialTheme.colorScheme.secondaryContainer
+        Role.OWNER -> stringResource(R.string.common_role_owner) to MaterialTheme.colorScheme.primaryContainer
+        Role.STAFF -> stringResource(R.string.common_role_staff) to MaterialTheme.colorScheme.tertiaryContainer
+        Role.ADMIN -> stringResource(R.string.common_role_admin) to MaterialTheme.colorScheme.errorContainer
     }
     Pill(label, modifier, background = color, foreground = MaterialTheme.colorScheme.onSurface)
 }
@@ -165,7 +167,7 @@ fun StarRating(
             val filled = star <= rating
             Icon(
                 imageVector = if (filled) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                contentDescription = "Ocena $star",
+                contentDescription = stringResource(R.string.common_star_rating_content_description, star),
                 tint = if (filled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outline,
                 modifier = Modifier
                     .size(size.dp)
@@ -192,9 +194,12 @@ fun LevelBar(pointsTotal: Int, modifier: Modifier = Modifier) {
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("Nivo ${progress.level}", style = MaterialTheme.typography.labelLarge)
             Text(
-                "${progress.into} / ${progress.needed}",
+                stringResource(R.string.common_level_label, progress.level),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            Text(
+                stringResource(R.string.common_level_progress, progress.into, progress.needed),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -229,7 +234,7 @@ fun PhotoThumb(image: ImageBitmap?, modifier: Modifier = Modifier, corner: Int =
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
-            Text("☕", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.common_coffee_emoji), style = MaterialTheme.typography.headlineMedium)
         }
     } else {
         Image(

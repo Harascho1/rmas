@@ -54,9 +54,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.PhotoThumb
 import rs.coffeeconquest.app.ui.common.StateContent
@@ -114,7 +116,6 @@ fun MapScreen(
             )
         }
 
-        // Search bar and the filter button float above the map.
         Card(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -126,7 +127,7 @@ fun MapScreen(
                 OutlinedTextField(
                     value = state.filter.query.orEmpty(),
                     onValueChange = viewModel::onQueryChange,
-                    placeholder = { Text("Pretrazi kafice...") },
+                    placeholder = { Text(stringResource(R.string.map_search_placeholder)) },
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
@@ -137,22 +138,23 @@ fun MapScreen(
                             if (state.filter.activeCount > 0) Badge { Text("${state.filter.activeCount}") }
                         },
                     ) {
-                        Icon(Icons.Filled.FilterList, contentDescription = "Filteri")
+                        Icon(Icons.Filled.FilterList, contentDescription = stringResource(R.string.map_content_desc_filters))
                     }
                 }
             }
         }
 
-        // Which provider answered - GPS is metres, the network is a neighbourhood.
         state.fixSource?.let { source ->
-            val accuracy = state.fixAccuracyMeters?.let { " (~${it.toInt()} m)" }.orEmpty()
+            val accuracy = state.fixAccuracyMeters?.let {
+                stringResource(R.string.map_location_accuracy, it.toInt())
+            }.orEmpty()
             Card(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 84.dp),
             ) {
                 Text(
-                    "Lokacija: ${source.label}$accuracy",
+                    stringResource(R.string.map_location_label, source.label, accuracy),
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
                 )
@@ -169,14 +171,14 @@ fun MapScreen(
             SmallFloatingActionButton(onClick = viewModel::toggleListMode) {
                 Icon(
                     if (state.listMode) Icons.Filled.Map else Icons.AutoMirrored.Filled.FormatListBulleted,
-                    contentDescription = "Promeni prikaz",
+                    contentDescription = stringResource(R.string.map_content_desc_toggle_view),
                 )
             }
             SmallFloatingActionButton(onClick = viewModel::locate) {
-                Icon(Icons.Filled.MyLocation, contentDescription = "Moja lokacija")
+                Icon(Icons.Filled.MyLocation, contentDescription = stringResource(R.string.map_content_desc_my_location))
             }
             FloatingActionButton(onClick = onAddCafe) {
-                Icon(Icons.Filled.Add, contentDescription = "Predlozi kafic")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.map_content_desc_add_cafe))
             }
         }
 
@@ -188,10 +190,10 @@ fun MapScreen(
                         .padding(bottom = 24.dp, start = 24.dp, end = 90.dp),
                 ) {
                     Text(
-                        buildString {
-                            append("Nema kafica u krugu od ${state.radiusKm.toInt()} km")
-                            if (state.filter.isActive) append(" za izabrane filtere")
-                            append(". Predlozite novi preko + dugmeta.")
+                        if (state.filter.isActive) {
+                            stringResource(R.string.map_empty_cafes_filtered, state.radiusKm.toInt())
+                        } else {
+                            stringResource(R.string.map_empty_cafes, state.radiusKm.toInt())
                         },
                         modifier = Modifier.padding(12.dp),
                         style = MaterialTheme.typography.bodyMedium,
@@ -278,11 +280,11 @@ fun CafeRow(cafe: Cafe, photo: ImageBitmap?, onClick: () -> Unit, modifier: Modi
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Pill(cafe.type.label)
-                    Pill("★ ${formatRating(cafe.averageRating)}")
-                    Pill("${cafe.checkInCount} poseta")
+                    Pill(stringResource(R.string.map_rating_star, formatRating(cafe.averageRating)))
+                    Pill(stringResource(R.string.map_visits_count, cafe.checkInCount))
                     if (cafe.activeChallenges.isNotEmpty()) {
                         Pill(
-                            "x${cafe.activeChallenges.maxOf { it.multiplier }}",
+                            stringResource(R.string.map_multiplier_badge, cafe.activeChallenges.maxOf { it.multiplier }),
                             background = MaterialTheme.colorScheme.errorContainer,
                             foreground = MaterialTheme.colorScheme.onErrorContainer,
                         )
@@ -307,32 +309,25 @@ private fun CafePreview(cafe: Cafe, onOpen: () -> Unit) {
         )
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Pill("★ ${formatRating(cafe.averageRating)} (${cafe.reviewCount})")
-            Pill("${cafe.checkInCount} check-inova")
-            if (cafe.myCheckInCount > 0) Pill("osvojen ${cafe.myCheckInCount}x")
+            Pill(stringResource(R.string.map_rating_with_reviews, formatRating(cafe.averageRating), cafe.reviewCount))
+            Pill(stringResource(R.string.map_checkins_count, cafe.checkInCount))
+            if (cafe.myCheckInCount > 0) Pill(stringResource(R.string.map_conquered_count, cafe.myCheckInCount))
         }
         cafe.topVisitor?.let {
             Spacer(Modifier.height(12.dp))
             Text(
-                "👑 Osvajac: ${it.displayName} (${it.visits} poseta)",
+                stringResource(R.string.map_top_visitor, it.displayName, it.visits),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
         Spacer(Modifier.height(20.dp))
         Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
-            Text("Otvori kafic")
+            Text(stringResource(R.string.map_button_open_cafe))
         }
         Spacer(Modifier.height(12.dp))
     }
 }
 
-/**
- * Every way the POI list can be narrowed, in one sheet: tip, atributi, autor,
- * datum dodavanja, ocena and the search radius.
- *
- * Choices apply when the sheet is dismissed rather than on every tap, so
- * adjusting four things costs one query instead of four.
- */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun FilterSheet(
@@ -361,12 +356,11 @@ private fun FilterSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Filteri", style = MaterialTheme.typography.titleLarge)
-                TextButton(onClick = onReset, enabled = filter.isActive) { Text("Ponisti") }
+                Text(stringResource(R.string.map_filters_title), style = MaterialTheme.typography.titleLarge)
+                TextButton(onClick = onReset, enabled = filter.isActive) { Text(stringResource(R.string.map_button_reset)) }
             }
 
-            // ------------------------------------------------------------ radius
-            FilterLabel("Radijus pretrage: ${"%.1f".format(radiusMeters / 1000)} km")
+            FilterLabel(stringResource(R.string.map_filter_radius_label, "%.1f".format(radiusMeters / 1000)))
             Slider(
                 value = radiusMeters.toFloat(),
                 onValueChange = { onRadius(it.toDouble()) },
@@ -376,13 +370,12 @@ private fun FilterSheet(
 
             HorizontalDivider()
 
-            // --------------------------------------------------------------- tip
-            FilterLabel("Tip")
+            FilterLabel(stringResource(R.string.map_filter_type_label))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = filter.type == null,
                     onClick = { onType(null) },
-                    label = { Text("Svi") },
+                    label = { Text(stringResource(R.string.map_filter_all)) },
                 )
                 CafeType.entries.forEach { type ->
                     FilterChip(
@@ -393,44 +386,41 @@ private fun FilterSheet(
                 }
             }
 
-            // ---------------------------------------------------------- atributi
-            FilterLabel("Atributi")
+            FilterLabel(stringResource(R.string.map_filter_attributes_label))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CafeAttributes.all.forEach { tag ->
                     FilterChip(
                         selected = tag in filter.attributes,
                         onClick = { onAttribute(tag) },
-                        label = { Text("#$tag") },
+                        label = { Text(stringResource(R.string.map_filter_tag_hash, tag)) },
                     )
                 }
             }
 
-            // ------------------------------------------------------------- ocena
-            FilterLabel("Najmanja ocena")
+            FilterLabel(stringResource(R.string.map_filter_min_rating_label))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = filter.minRating == null,
                     onClick = { onMinRating(null) },
-                    label = { Text("Bilo koja") },
+                    label = { Text(stringResource(R.string.map_filter_any_rating)) },
                 )
                 listOf(3.0, 4.0, 4.5).forEach { rating ->
                     FilterChip(
                         selected = filter.minRating == rating,
                         onClick = { onMinRating(if (filter.minRating == rating) null else rating) },
-                        label = { Text("${rating}+") },
+                        label = { Text(stringResource(R.string.map_filter_rating_plus, rating)) },
                     )
                 }
             }
 
             HorizontalDivider()
 
-            // -------------------------------------------------------------- autor
-            FilterLabel("Autor")
+            FilterLabel(stringResource(R.string.map_filter_author_label))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Samo moji predlozi", Modifier.weight(1f))
+                Text(stringResource(R.string.map_filter_only_mine), Modifier.weight(1f))
                 Switch(checked = filter.onlyMine, onCheckedChange = onOnlyMine)
             }
             OutlinedTextField(
@@ -438,12 +428,11 @@ private fun FilterSheet(
                 onValueChange = onAuthor,
                 enabled = !filter.onlyMine,
                 singleLine = true,
-                label = { Text("Korisnicko ime autora") },
+                label = { Text(stringResource(R.string.map_filter_author_username_label)) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // ------------------------------------------------------------ datumi
-            FilterLabel("Dodato")
+            FilterLabel(stringResource(R.string.map_filter_added_label))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CafeFilter.DATE_PRESETS.forEach { (label, days) ->
                     FilterChip(
@@ -456,7 +445,7 @@ private fun FilterSheet(
 
             Spacer(Modifier.height(8.dp))
             Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                Text("Prikazi rezultate")
+                Text(stringResource(R.string.map_button_show_results))
             }
         }
     }

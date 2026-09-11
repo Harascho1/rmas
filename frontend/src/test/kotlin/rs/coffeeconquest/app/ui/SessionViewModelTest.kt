@@ -37,7 +37,6 @@ class SessionViewModelTest {
         assertEquals(SessionState.SignedIn(luka), viewModel.state.value)
     }
 
-    /** A stored session whose profile is gone is worse than none: sign the user out. */
     @Test
     fun `a session that cannot be resumed is thrown away`() {
         every { repository.isSignedIn() } returns true
@@ -73,7 +72,6 @@ class SessionViewModelTest {
         assertEquals(SessionState.SignedIn(richer), viewModel.state.value)
     }
 
-    /** A failed refresh must not log the user out mid-session. */
     @Test
     fun `a failed refresh leaves the session alone`() {
         val luka = profile()

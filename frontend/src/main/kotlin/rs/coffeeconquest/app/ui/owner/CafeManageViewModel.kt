@@ -31,7 +31,6 @@ data class CafeManageUiState(
     val message: String? = null,
 )
 
-/** Everything an owner does with one cafe: numbers, replies and bonus challenges. */
 class CafeManageViewModel(
     private val repository: CoffeeRepository = AppContainer.repository,
 ) : ViewModel() {

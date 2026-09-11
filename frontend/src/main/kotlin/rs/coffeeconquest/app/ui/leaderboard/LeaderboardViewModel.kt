@@ -35,7 +35,6 @@ class LeaderboardViewModel(
     private val photoStore = PhotoStore(repository, viewModelScope)
     val photos: StateFlow<Map<String, ImageBitmap>> = photoStore.photos
 
-    /** The UI reports which photo scrolled into view; fetching it is this ViewModel's job. */
     fun requestPhoto(photoId: String?) = photoStore.load(photoId)
 
     fun start(city: String?) {
@@ -68,7 +67,6 @@ class LeaderboardViewModel(
                 onFailure = { error -> _state.update { it.copy(board = UiState.Error(error.userMessage())) } },
             )
 
-            // The crown is the reward for the weekly city race, so it is worth showing up front.
             current.city?.let { city ->
                 runCatching { repository.cityChampion(city) }
                     .onSuccess { champion -> _state.update { it.copy(champion = champion) } }

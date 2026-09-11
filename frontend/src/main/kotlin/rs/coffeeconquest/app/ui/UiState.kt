@@ -1,6 +1,5 @@
 package rs.coffeeconquest.app.ui
 
-/** The three states every screen can be in. Keeps `when` blocks in the UI exhaustive. */
 sealed interface UiState<out T> {
     data object Loading : UiState<Nothing>
     data class Error(val message: String) : UiState<Nothing>

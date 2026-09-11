@@ -34,7 +34,6 @@ class FeedViewModelTest {
         assertEquals(1, viewModel.state.value.items.dataOrNull?.size)
     }
 
-    /** A check-in made on another phone should land here by itself. */
     @Test
     fun `a new event arrives without reopening the tab`() {
         val stream = MutableSharedFlow<List<FeedItem>>(replay = 1)

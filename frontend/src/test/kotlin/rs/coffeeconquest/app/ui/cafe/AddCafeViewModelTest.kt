@@ -67,7 +67,6 @@ class AddCafeViewModelTest {
         coVerify(exactly = 0) { repository.createCafe(any()) }
     }
 
-    /** Chip choices and hand-typed tags end up in one list, without duplicates. */
     @Test
     fun `chosen attributes and typed tags are merged and deduplicated`() {
         val viewModel = viewModel()
@@ -143,7 +142,6 @@ class AddCafeViewModelTest {
         assertEquals(21.8958, viewModel.state.value.longitude, 0.0)
     }
 
-    /** Without a fix the pin must not silently stay on Belgrade as if it were real. */
     @Test
     fun `no fix is reported instead of guessed`() {
         val viewModel = viewModel()
@@ -196,7 +194,6 @@ class AddCafeViewModelTest {
         assertFalse(viewModel.state.value.resolvingAddress)
     }
 
-    /** A pin dropped next door must not wipe an address the user knows is right. */
     @Test
     fun `a hand-typed address survives the reverse lookup`() {
         coEvery { addresses.reverse(any()) } returns
@@ -207,7 +204,6 @@ class AddCafeViewModelTest {
         viewModel.onMapPick(LatLon(43.3209, 21.8958))
 
         assertEquals("Kod stare cesme bb", viewModel.state.value.address)
-        // The city was never touched, so it still follows the pin.
         assertEquals("Nis", viewModel.state.value.city)
     }
 

@@ -36,9 +36,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.common.Avatar
 import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.PhotoThumb
@@ -82,22 +84,21 @@ fun CafeDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text((state.cafe as? UiState.Ready)?.data?.name ?: "Kafic") },
+                title = { Text((state.cafe as? UiState.Ready)?.data?.name ?: stringResource(R.string.cafedetail_title_fallback)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Nazad")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cafedetail_back))
                     }
                 },
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            // Only hunters play the game; owners and staff see the same cafe without the button.
             if (profile.role == Role.HUNTER || profile.role == Role.ADMIN) {
                 ExtendedFloatingActionButton(
                     onClick = { onCheckIn(cafeId) },
                     icon = { Icon(Icons.Filled.LocalCafe, contentDescription = null) },
-                    text = { Text("Check-in") },
+                    text = { Text(stringResource(R.string.cafedetail_button_checkin)) },
                 )
             }
         },
@@ -123,7 +124,7 @@ fun CafeDetailScreen(
 
                 if (cafe.activeChallenges.isNotEmpty()) {
                     item {
-                        SectionCard(title = "Aktivni izazovi") {
+                        SectionCard(title = stringResource(R.string.cafedetail_section_active_challenges)) {
                             cafe.activeChallenges.forEach { challenge ->
                                 Row(
                                     Modifier
@@ -138,7 +139,7 @@ fun CafeDetailScreen(
                                         }
                                     }
                                     Pill(
-                                        "x${challenge.multiplier}",
+                                        stringResource(R.string.cafedetail_challenge_multiplier, challenge.multiplier),
                                         background = MaterialTheme.colorScheme.errorContainer,
                                         foreground = MaterialTheme.colorScheme.onErrorContainer,
                                     )
@@ -149,7 +150,7 @@ fun CafeDetailScreen(
                 }
 
                 item {
-                    SectionCard(title = "Ostavi ocenu") {
+                    SectionCard(title = stringResource(R.string.cafedetail_section_leave_rating)) {
                         StarRating(
                             rating = state.myRating,
                             size = 32,
@@ -159,7 +160,7 @@ fun CafeDetailScreen(
                         OutlinedTextField(
                             value = state.myComment,
                             onValueChange = viewModel::onCommentChange,
-                            placeholder = { Text("Komentar (opciono)") },
+                            placeholder = { Text(stringResource(R.string.cafedetail_placeholder_comment)) },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2,
                         )
@@ -169,14 +170,20 @@ fun CafeDetailScreen(
                             enabled = !state.submittingReview,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(if (state.submittingReview) "Salje se..." else "Posalji ocenu")
+                            Text(
+                                if (state.submittingReview) {
+                                    stringResource(R.string.cafedetail_button_sending_review)
+                                } else {
+                                    stringResource(R.string.cafedetail_button_submit_review)
+                                },
+                            )
                         }
                     }
                 }
 
                 if (state.recentCheckIns.isNotEmpty()) {
                     item {
-                        SectionCard(title = "Poslednji check-inovi") {
+                        SectionCard(title = stringResource(R.string.cafedetail_section_recent_checkins)) {
                             state.recentCheckIns.take(8).forEach { checkIn ->
                                 Row(
                                     Modifier
@@ -196,10 +203,10 @@ fun CafeDetailScreen(
                                         )
                                     }
                                     if (checkIn.status == CheckInStatus.VALID) {
-                                        Pill("+${checkIn.pointsAwarded}")
+                                        Pill(stringResource(R.string.cafedetail_points_awarded, checkIn.pointsAwarded))
                                     } else {
                                         Pill(
-                                            "na proveri",
+                                            stringResource(R.string.cafedetail_status_pending),
                                             background = MaterialTheme.colorScheme.errorContainer,
                                             foreground = MaterialTheme.colorScheme.onErrorContainer,
                                         )
@@ -212,7 +219,7 @@ fun CafeDetailScreen(
 
                 item {
                     Text(
-                        "Recenzije (${state.reviews.size})",
+                        stringResource(R.string.cafedetail_reviews_count, state.reviews.size),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(top = 8.dp),
                     )
@@ -242,7 +249,7 @@ fun CafeDetailScreen(
                             HorizontalDivider()
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "Odgovor vlasnika",
+                                stringResource(R.string.cafedetail_owner_reply_label),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -274,23 +281,26 @@ private fun CafeHeader(cafe: Cafe, photo: ImageBitmap?) {
         }
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Pill("★ ${formatRating(cafe.averageRating)} (${cafe.reviewCount})")
-            Pill("${cafe.checkInCount} check-inova")
+            Pill(stringResource(R.string.cafedetail_rating_summary, formatRating(cafe.averageRating), cafe.reviewCount))
+            Pill(stringResource(R.string.cafedetail_checkin_count, cafe.checkInCount))
             formatDistance(cafe.distanceMeters)?.let { Pill(it) }
         }
         Spacer(Modifier.height(10.dp))
+        val tagHashFormat = stringResource(R.string.cafedetail_tag_hash)
+        val tagSeparator = stringResource(R.string.cafedetail_tag_separator)
         listOfNotNull(
-            cafe.address?.let { "📍 $it" },
-            cafe.openingHours?.let { "🕘 $it" },
-            "\u2615 ${cafe.type.label}",
-            cafe.tags.takeIf { it.isNotEmpty() }?.joinToString(" · ") { "#$it" },
+            cafe.address?.let { stringResource(R.string.cafedetail_address_line, it) },
+            cafe.openingHours?.let { stringResource(R.string.cafedetail_hours_line, it) },
+            stringResource(R.string.cafedetail_type_line, cafe.type.label),
+            cafe.tags.takeIf { it.isNotEmpty() }
+                ?.joinToString(tagSeparator) { String.format(tagHashFormat, it) },
         ).forEach {
             Text(it, style = MaterialTheme.typography.bodyMedium)
         }
         cafe.topVisitor?.let {
             Spacer(Modifier.height(8.dp))
             Text(
-                "👑 Osvajac kafica: ${it.displayName} — ${it.visits} poseta",
+                stringResource(R.string.cafedetail_top_visitor, it.displayName, it.visits),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -298,7 +308,7 @@ private fun CafeHeader(cafe: Cafe, photo: ImageBitmap?) {
         if (cafe.distanceMeters != null && cafe.distanceMeters!! > Geo.MAX_CHECKIN_DISTANCE_M) {
             Spacer(Modifier.height(8.dp))
             Text(
-                "Za GPS check-in priblizite se na ${Geo.MAX_CHECKIN_DISTANCE_M.toInt()} m.",
+                stringResource(R.string.cafedetail_checkin_distance_hint, Geo.MAX_CHECKIN_DISTANCE_M.toInt()),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.error,
             )

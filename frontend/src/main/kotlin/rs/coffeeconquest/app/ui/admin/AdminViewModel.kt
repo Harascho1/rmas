@@ -39,7 +39,6 @@ class AdminViewModel(
     private val photoStore = PhotoStore(repository, viewModelScope)
     val photos: StateFlow<Map<String, ImageBitmap>> = photoStore.photos
 
-    /** The UI reports which photo scrolled into view; fetching it is this ViewModel's job. */
     fun requestPhoto(photoId: String?) = photoStore.load(photoId)
 
     fun onTabChange(tab: AdminTab) {
@@ -100,7 +99,6 @@ class AdminViewModel(
         "Rola je promenjena u ${role.name}."
     }
 
-    /** Runs a moderation action, then reloads the current tab. */
     private fun act(block: suspend () -> String) {
         viewModelScope.launch {
             _state.update { it.copy(busy = true) }

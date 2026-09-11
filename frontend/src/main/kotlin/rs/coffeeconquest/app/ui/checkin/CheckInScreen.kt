@@ -18,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -38,11 +37,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanOptions
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.data.LocationFix
 import rs.coffeeconquest.app.ui.common.Pill
 import rs.coffeeconquest.app.ui.common.SectionCard
@@ -73,17 +72,13 @@ fun CheckInScreen(
         ActivityResultContracts.RequestPermission(),
     ) { granted -> if (granted) cameraLauncher.launch(null) }
 
-    val qrLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
-        viewModel.onQrScanned(result.contents)
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Check-in") },
+                title = { Text(stringResource(R.string.checkin_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Nazad")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.checkin_back))
                     }
                 },
             )
@@ -119,22 +114,17 @@ fun CheckInScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                SectionCard(title = "Kako potvrdjujete posetu?") {
+                SectionCard(title = stringResource(R.string.checkin_method_section_title)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = state.method == CheckInMethod.GPS,
                             onClick = { viewModel.onMethodChange(CheckInMethod.GPS) },
-                            label = { Text("GPS") },
-                        )
-                        FilterChip(
-                            selected = state.method == CheckInMethod.QR,
-                            onClick = { viewModel.onMethodChange(CheckInMethod.QR) },
-                            label = { Text("QR kod") },
+                            label = { Text(stringResource(R.string.checkin_method_gps)) },
                         )
                         FilterChip(
                             selected = state.method == CheckInMethod.HONOR,
                             onClick = { viewModel.onMethodChange(CheckInMethod.HONOR) },
-                            label = { Text("Bez dokaza") },
+                            label = { Text(stringResource(R.string.checkin_method_honor)) },
                         )
                     }
 
@@ -145,23 +135,27 @@ fun CheckInScreen(
                             val distance = formatDistance(state.distanceMeters)
                             Text(
                                 when {
-                                    state.fix == null -> "Lokacija jos nije ocitana."
-                                    state.inRange -> "Udaljenost: $distance — mozete da potvrdite posetu."
-                                    else -> "Udaljenost: $distance — priblizite se na ${Geo.MAX_CHECKIN_DISTANCE_M.toInt()} m."
+                                    state.fix == null -> stringResource(R.string.checkin_location_not_read)
+                                    state.inRange -> stringResource(R.string.checkin_distance_in_range, distance.orEmpty())
+                                    else -> stringResource(
+                                        R.string.checkin_distance_out_of_range,
+                                        distance.orEmpty(),
+                                        Geo.MAX_CHECKIN_DISTANCE_M.toInt(),
+                                    )
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (state.inRange) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.error,
                             )
-                            // A network fix can be a kilometre out, which fails the
-                            // 150 m rule through no fault of the user - so say so.
                             state.fix?.let { fix ->
-                                val accuracy = fix.accuracyMeters?.let { " (~${it.toInt()} m)" }.orEmpty()
+                                val accuracy = fix.accuracyMeters?.let {
+                                    stringResource(R.string.checkin_location_accuracy_suffix, it.toInt())
+                                }.orEmpty()
                                 Text(
                                     if (fix.source == LocationFix.Source.NETWORK) {
-                                        "Izvor: ${fix.source.label}$accuracy — ukljucite GPS za precizniju lokaciju."
+                                        stringResource(R.string.checkin_location_source_network, fix.source.label, accuracy)
                                     } else {
-                                        "Izvor: ${fix.source.label}$accuracy"
+                                        stringResource(R.string.checkin_location_source_other, fix.source.label, accuracy)
                                     },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -169,49 +163,26 @@ fun CheckInScreen(
                             }
                             Spacer(Modifier.height(8.dp))
                             OutlinedButton(onClick = viewModel::refreshLocation) {
-                                Text("Osvezi lokaciju")
+                                Text(stringResource(R.string.checkin_button_refresh_location))
                             }
                         }
 
-                        CheckInMethod.QR -> {
-                            Text(
-                                if (state.qrToken == null) {
-                                    "Zamolite osoblje da prikaze QR kod, pa ga skenirajte. Nosi +${ScoreBonus.QR} poena."
-                                } else {
-                                    "QR kod je uspesno skeniran."
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedButton(
-                                onClick = {
-                                    qrLauncher.launch(
-                                        ScanOptions()
-                                            .setPrompt("Skenirajte QR kod kafica")
-                                            .setBeepEnabled(false)
-                                            .setOrientationLocked(false),
-                                    )
-                                },
-                            ) {
-                                Icon(Icons.Filled.QrCodeScanner, contentDescription = null)
-                                Text("  Skeniraj QR")
-                            }
-                        }
+                        CheckInMethod.QR -> Unit
 
                         CheckInMethod.HONOR -> Text(
-                            "Bez dokaza vredi upola manje i ide administratoru na proveru pre nego sto poeni budu dodeljeni.",
+                            stringResource(R.string.checkin_honor_warning),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
                         )
                     }
                 }
 
-                SectionCard(title = "Slika kafe (+${ScoreBonus.PHOTO} poena)") {
+                SectionCard(title = stringResource(R.string.checkin_photo_section_title, ScoreBonus.PHOTO)) {
                     val photo = state.photo
                     if (photo != null) {
                         Image(
                             bitmap = photo.asImageBitmap(),
-                            contentDescription = "Slika kafe",
+                            contentDescription = stringResource(R.string.checkin_photo_content_description),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -225,36 +196,46 @@ fun CheckInScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Icon(Icons.Filled.PhotoCamera, contentDescription = null)
-                        Text(if (photo == null) "  Slikaj kafu" else "  Slikaj ponovo")
+                        Text(
+                            if (photo == null) stringResource(R.string.checkin_button_take_photo)
+                            else stringResource(R.string.checkin_button_retake_photo),
+                        )
                     }
                 }
 
-                SectionCard(title = "Ocena (opciono)") {
+                SectionCard(title = stringResource(R.string.checkin_rating_section_title)) {
                     StarRating(state.rating, size = 30, onRatingChange = viewModel::onRatingChange)
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = state.comment,
                         onValueChange = viewModel::onCommentChange,
-                        placeholder = { Text("Komentar") },
+                        placeholder = { Text(stringResource(R.string.checkin_comment_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2,
                     )
                 }
 
-                SectionCard(title = "Procena poena") {
+                SectionCard(title = stringResource(R.string.checkin_score_section_title)) {
                     val preview = state.preview
-                    ScoreRow("Osnovni check-in", preview.base)
-                    if (preview.firstVisitBonus > 0) ScoreRow("Prvi put ovde", preview.firstVisitBonus)
-                    if (preview.photoBonus > 0) ScoreRow("Slika", preview.photoBonus)
-                    if (preview.qrBonus > 0) ScoreRow("QR potvrda", preview.qrBonus)
-                    if (preview.streakBonus > 0) ScoreRow("Streak", preview.streakBonus)
-                    if (preview.honorPenalty != 0) ScoreRow("Bez dokaza", preview.honorPenalty)
+                    ScoreRow(stringResource(R.string.checkin_score_base), preview.base)
+                    if (preview.firstVisitBonus > 0) {
+                        ScoreRow(stringResource(R.string.checkin_score_first_visit), preview.firstVisitBonus)
+                    }
+                    if (preview.photoBonus > 0) ScoreRow(stringResource(R.string.checkin_score_photo), preview.photoBonus)
+                    if (preview.streakBonus > 0) ScoreRow(stringResource(R.string.checkin_score_streak), preview.streakBonus)
+                    if (preview.honorPenalty != 0) {
+                        ScoreRow(stringResource(R.string.checkin_method_honor), preview.honorPenalty)
+                    }
                     if (preview.challengeMultiplier > 1.0) {
-                        ScoreRow("Izazov x${preview.challengeMultiplier}", 0, suffix = true)
+                        ScoreRow(
+                            stringResource(R.string.checkin_score_challenge, preview.challengeMultiplier),
+                            0,
+                            suffix = true,
+                        )
                     }
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Ukupno: ${points(preview.total)}",
+                        stringResource(R.string.checkin_total_points, points(preview.total)),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -269,7 +250,10 @@ fun CheckInScreen(
                     enabled = state.canSubmit,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                 ) {
-                    Text(if (state.submitting) "Salje se..." else "Popio sam kafu ☕")
+                    Text(
+                        if (state.submitting) stringResource(R.string.checkin_button_submit_sending)
+                        else stringResource(R.string.checkin_button_submit),
+                    )
                 }
                 Spacer(Modifier.height(24.dp))
             }
@@ -286,7 +270,7 @@ private fun ScoreRow(label: String, value: Int, suffix: Boolean = false) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         if (!suffix) {
             Text(
-                if (value >= 0) "+$value" else "$value",
+                if (value >= 0) stringResource(R.string.checkin_points_positive, value) else "$value",
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (value >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             )
@@ -305,10 +289,14 @@ private fun CheckInResultView(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("☕", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.checkin_result_emoji), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         Text(
-            if (result.checkIn.pointsAwarded > 0) "+${result.checkIn.pointsAwarded}" else "Na proveri",
+            if (result.checkIn.pointsAwarded > 0) {
+                stringResource(R.string.checkin_points_positive, result.checkIn.pointsAwarded)
+            } else {
+                stringResource(R.string.checkin_result_points_pending)
+            },
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -316,15 +304,16 @@ private fun CheckInResultView(
 
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Pill("Ukupno ${result.newTotalPoints}")
-            Pill("Nivo ${result.level}")
-            Pill("Streak ${result.streakDays}")
+            Pill(stringResource(R.string.checkin_result_total_points, result.newTotalPoints))
+            Pill(stringResource(R.string.checkin_result_level, result.level))
+            Pill(stringResource(R.string.checkin_result_streak, result.streakDays))
         }
 
-        if (result.checkIn.flagReason != null) {
+        val flagReason = result.checkIn.flagReason
+        if (flagReason != null) {
             Spacer(Modifier.height(16.dp))
             Text(
-                "Check-in ceka odobrenje: ${result.checkIn.flagReason}",
+                stringResource(R.string.checkin_result_flag_reason, flagReason),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -332,21 +321,22 @@ private fun CheckInResultView(
 
         if (result.newBadges.isNotEmpty()) {
             Spacer(Modifier.height(20.dp))
-            Text("Novi bedzevi", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.checkin_result_new_badges_title), style = MaterialTheme.typography.titleMedium)
             result.newBadges.forEach {
-                Text("${it.emoji} ${it.title}", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(R.string.checkin_result_badge_item, it.emoji, it.title),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
             }
         }
 
         Spacer(Modifier.height(32.dp))
         Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-            Text("Gotovo")
+            Text(stringResource(R.string.checkin_button_done))
         }
     }
 }
 
-/** Mirrors the shared scoring constants for use in the copy above. */
 private object ScoreBonus {
-    const val QR = rs.coffeeconquest.shared.rules.ScoreRules.QR_BONUS
     const val PHOTO = rs.coffeeconquest.shared.rules.ScoreRules.PHOTO_BONUS
 }

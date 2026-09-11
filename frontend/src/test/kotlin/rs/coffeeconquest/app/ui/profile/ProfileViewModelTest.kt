@@ -36,7 +36,6 @@ class ProfileViewModelTest {
             FollowResponse(following = true, followerCount = 1)
     }
 
-    /** My own history comes from a different query than someone else's. */
     @Test
     fun `my own profile reads my check-ins`() {
         val viewModel = ProfileViewModel(repository)
@@ -58,7 +57,6 @@ class ProfileViewModelTest {
         assertEquals(listOf(checkIn("ci2")), viewModel.state.value.history)
     }
 
-    /** The board shows every badge in the game, earned or not. */
     @Test
     fun `the badge board covers all badges and marks the earned ones`() {
         val earned = Badges.all.first().code
@@ -153,7 +151,6 @@ class ProfileViewModelTest {
         coVerify { repository.follow("u2", false) }
     }
 
-    /** Nothing to follow until the profile has actually loaded. */
     @Test
     fun `toggleFollow does nothing before the profile is ready`() {
         val viewModel = ProfileViewModel(repository)

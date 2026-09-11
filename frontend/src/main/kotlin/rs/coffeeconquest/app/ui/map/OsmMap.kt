@@ -12,6 +12,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.createBitmap
 import org.osmdroid.config.Configuration
@@ -21,6 +22,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.data.LatLon
 import rs.coffeeconquest.shared.dto.Cafe
 
@@ -36,19 +38,21 @@ fun OsmMap(
 ) {
     val context = LocalContext.current
 
+    val youAreHereLabel = stringResource(R.string.map_marker_you_are_here)
+    val pickLocationLabel = stringResource(R.string.map_marker_pick_location)
+    val cafeEmoji = stringResource(R.string.map_marker_cafe_emoji)
+
     val centred = remember { MapAnchor() }
 
     val mapView = remember {
         Configuration.getInstance().apply {
             load(context, context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
-            // OSM's tile policy requires an identifying user agent.
             userAgentValue = "rs.coffeeconquest.app/0.0.0"
         }
         MapView(context).apply {
             setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
             controller.setZoom(15.0)
-            // Inside a scrolling form the parent would otherwise swallow every pan.
             setOnTouchListener { view, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN ->
@@ -90,7 +94,7 @@ fun OsmMap(
                         position = GeoPoint(center.latitude, center.longitude)
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                         icon = dotDrawable(view.context, Color.parseColor("#2E7D5B"))
-                        title = "Vi ste ovde"
+                        title = youAreHereLabel
                     },
                 )
             }
@@ -101,11 +105,11 @@ fun OsmMap(
                         position = GeoPoint(cafe.latitude, cafe.longitude)
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                         title = cafe.name
-                        // A cafe the user already conquered gets the crema pin.
                         icon = pinDrawable(
                             context = view.context,
                             conquered = cafe.myCheckInCount > 0,
                             boosted = cafe.activeChallenges.isNotEmpty(),
+                            emoji = cafeEmoji,
                         )
                         setOnMarkerClickListener { _, _ ->
                             onCafeClick(cafe)
@@ -121,7 +125,7 @@ fun OsmMap(
                         position = GeoPoint(pickedPoint.latitude, pickedPoint.longitude)
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                         icon = targetPinDrawable(view.context)
-                        title = "Ovde ide kafic"
+                        title = pickLocationLabel
                     },
                 )
             }
@@ -183,7 +187,7 @@ private fun dotDrawable(context: Context, color: Int): Drawable {
     return BitmapDrawable(context.resources, bitmap)
 }
 
-private fun pinDrawable(context: Context, conquered: Boolean, boosted: Boolean): Drawable {
+private fun pinDrawable(context: Context, conquered: Boolean, boosted: Boolean, emoji: String): Drawable {
     val density = context.resources.displayMetrics.density
     val width = (26 * density).toInt()
     val height = (34 * density).toInt()
@@ -214,7 +218,7 @@ private fun pinDrawable(context: Context, conquered: Boolean, boosted: Boolean):
     paint.color = Color.WHITE
     paint.textSize = 13 * density
     paint.textAlign = Paint.Align.CENTER
-    canvas.drawText("☕", width / 2f, width / 2f + 5 * density, paint)
+    canvas.drawText(emoji, width / 2f, width / 2f + 5 * density, paint)
 
     return BitmapDrawable(context.resources, bitmap)
 }

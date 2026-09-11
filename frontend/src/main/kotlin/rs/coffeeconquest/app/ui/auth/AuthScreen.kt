@@ -27,10 +27,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.shared.dto.UserProfile
 import rs.coffeeconquest.shared.model.Role
 
@@ -49,16 +51,16 @@ fun AuthScreen(
                 .padding(horizontal = 24.dp, vertical = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("☕", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.auth_coffee_emoji), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(8.dp))
             Text(
-                "Coffee Conquest",
+                stringResource(R.string.auth_app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                "Osvajaj kafice po gradu, skupljaj poene, prestigni ekipu.",
+                stringResource(R.string.auth_tagline),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -68,7 +70,15 @@ fun AuthScreen(
             OutlinedTextField(
                 value = state.usernameOrEmail,
                 onValueChange = viewModel::onUsernameChange,
-                label = { Text(if (state.register) "Korisnicko ime" else "Korisnicko ime ili email") },
+                label = {
+                    Text(
+                        if (state.register) {
+                            stringResource(R.string.auth_label_username)
+                        } else {
+                            stringResource(R.string.auth_label_username_or_email)
+                        },
+                    )
+                },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -79,7 +89,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = state.email,
                     onValueChange = viewModel::onEmailChange,
-                    label = { Text("Email") },
+                    label = { Text(stringResource(R.string.auth_label_email)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -88,7 +98,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = state.displayName,
                     onValueChange = viewModel::onDisplayNameChange,
-                    label = { Text("Ime i prezime") },
+                    label = { Text(stringResource(R.string.auth_label_display_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -96,7 +106,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = state.city,
                     onValueChange = viewModel::onCityChange,
-                    label = { Text("Grad (za gradsku listu)") },
+                    label = { Text(stringResource(R.string.auth_label_city)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -106,7 +116,7 @@ fun AuthScreen(
             OutlinedTextField(
                 value = state.password,
                 onValueChange = viewModel::onPasswordChange,
-                label = { Text("Lozinka") },
+                label = { Text(stringResource(R.string.auth_label_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -116,7 +126,7 @@ fun AuthScreen(
             if (state.register) {
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    "Tip naloga",
+                    stringResource(R.string.auth_label_account_type),
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -128,16 +138,16 @@ fun AuthScreen(
                     FilterChip(
                         selected = state.role == Role.HUNTER,
                         onClick = { viewModel.onRoleChange(Role.HUNTER) },
-                        label = { Text("Hunter") },
+                        label = { Text(stringResource(R.string.auth_role_hunter)) },
                     )
                     FilterChip(
                         selected = state.role == Role.OWNER,
                         onClick = { viewModel.onRoleChange(Role.OWNER) },
-                        label = { Text("Vlasnik kafica") },
+                        label = { Text(stringResource(R.string.auth_role_owner)) },
                     )
                 }
                 Text(
-                    "Osoblje i admini dobijaju rolu od administratora.",
+                    stringResource(R.string.auth_role_hint),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp).fillMaxWidth(),
@@ -169,20 +179,29 @@ fun AuthScreen(
                         strokeWidth = 2.dp,
                     )
                 } else {
-                    Text(if (state.register) "Napravi nalog" else "Prijavi se")
+                    Text(
+                        if (state.register) {
+                            stringResource(R.string.auth_button_register)
+                        } else {
+                            stringResource(R.string.auth_button_login)
+                        },
+                    )
                 }
             }
 
             TextButton(onClick = viewModel::toggleMode, modifier = Modifier.padding(top = 8.dp)) {
                 Text(
-                    if (state.register) "Vec imate nalog? Prijavite se"
-                    else "Nemate nalog? Registrujte se",
+                    if (state.register) {
+                        stringResource(R.string.auth_toggle_to_login)
+                    } else {
+                        stringResource(R.string.auth_toggle_to_register)
+                    },
                 )
             }
 
             Spacer(Modifier.height(16.dp))
             Text(
-                "Demo nalozi: marko / vlasnik / konobar / admin, lozinka coffee123",
+                stringResource(R.string.auth_demo_accounts),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

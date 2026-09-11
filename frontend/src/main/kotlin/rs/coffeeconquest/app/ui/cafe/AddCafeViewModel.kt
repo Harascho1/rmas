@@ -140,7 +140,6 @@ class AddCafeViewModel(
                         longitude = current.longitude,
                         type = current.type,
                         openingHours = current.openingHours.trim().takeIf { it.isNotEmpty() },
-                        // Chip choices and anything typed by hand end up in one list.
                         tags = (
                             current.attributes +
                                 current.tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }

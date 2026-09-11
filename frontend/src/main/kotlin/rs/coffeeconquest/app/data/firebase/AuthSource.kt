@@ -16,7 +16,6 @@ class AuthSource(private val social: SocialSource) {
         Validation.password(request.password)?.let { throw AppException(it) }
         Validation.displayName(request.displayName)?.let { throw AppException(it) }
 
-        // STAFF and ADMIN are never self-assigned: an admin grants them later.
         if (request.role !in setOf(Role.HUNTER, Role.OWNER)) {
             throw AppException("Moguce je registrovati se samo kao HUNTER ili OWNER.")
         }

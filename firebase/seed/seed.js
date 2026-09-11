@@ -1,4 +1,4 @@
-const path = require('path');
+    const path = require('path');
 const admin = require('firebase-admin');
 
 const KEY_PATH = process.env.GOOGLE_APPLICATION_CREDENTIALS

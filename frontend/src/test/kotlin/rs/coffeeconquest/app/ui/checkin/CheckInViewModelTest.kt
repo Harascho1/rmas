@@ -31,7 +31,6 @@ class CheckInViewModelTest {
     private val repository = mockk<CoffeeRepository>()
     private val location = mockk<LocationProvider>()
 
-    /** The cafe used everywhere below, and a fix standing right at its door. */
     private val theCafe = cafe("c1", latitude = 43.3200, longitude = 21.9000)
 
     private val atTheDoor = fix(43.3200, 21.9000)
@@ -71,7 +70,6 @@ class CheckInViewModelTest {
         assertTrue(viewModel.state.value.canSubmit)
     }
 
-    /** Far enough away, GPS is refused - that is the whole anti-cheat rule. */
     @Test
     fun `a fix beyond the allowed radius blocks a GPS check-in`() {
         coEvery { location.current(any(), any()) } returns fix(43.4000, 21.9000)
@@ -95,54 +93,24 @@ class CheckInViewModelTest {
     }
 
     @Test
-    fun `QR needs a scanned token before it can be submitted`() {
-        coEvery { location.current(any(), any()) } returns fix(43.4000, 21.9000)
+    fun `QR is not a submittable method from this screen`() {
         val viewModel = CheckInViewModel(repository, location)
         viewModel.load("c1")
 
         viewModel.onMethodChange(CheckInMethod.QR)
+
         assertFalse(viewModel.state.value.canSubmit)
-
-        viewModel.onQrScanned("token-123")
-        assertTrue(viewModel.state.value.canSubmit)
     }
 
     @Test
-    fun `a scanned token switches the method by itself`() {
-        val viewModel = CheckInViewModel(repository, location)
-        viewModel.load("c1")
-
-        viewModel.onQrScanned("token-123")
-
-        assertEquals(CheckInMethod.QR, viewModel.state.value.method)
-        assertNull(viewModel.state.value.error)
-    }
-
-    @Test
-    fun `an unreadable QR code is reported and changes nothing`() {
-        val viewModel = CheckInViewModel(repository, location)
-        viewModel.load("c1")
-
-        viewModel.onQrScanned(null)
-
-        assertEquals("QR kod nije procitan.", viewModel.state.value.error)
-        assertNull(viewModel.state.value.qrToken)
-        assertEquals(CheckInMethod.GPS, viewModel.state.value.method)
-    }
-
-    /** The preview uses the same rules the server will, so it cannot promise too much. */
-    @Test
-    fun `the preview scores QR above GPS and GPS above honour`() {
+    fun `the preview scores GPS above honour`() {
         val viewModel = CheckInViewModel(repository, location)
         viewModel.load("c1")
 
         val gps = viewModel.state.value.preview.total
-        viewModel.onQrScanned("token-123")
-        val qr = viewModel.state.value.preview.total
         viewModel.onMethodChange(CheckInMethod.HONOR)
         val honor = viewModel.state.value.preview.total
 
-        assertTrue(qr > gps)
         assertTrue(gps > honor)
     }
 

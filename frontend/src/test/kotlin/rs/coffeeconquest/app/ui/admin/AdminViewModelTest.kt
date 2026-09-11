@@ -32,7 +32,6 @@ class AdminViewModelTest {
         coEvery { repository.allUsers() } returns listOf(profile())
     }
 
-    /** Each tab loads only its own queue - the other two are not paid for. */
     @Test
     fun `the cafes tab loads pending cafes and nothing else`() {
         val viewModel = AdminViewModel(repository)
@@ -76,7 +75,6 @@ class AdminViewModelTest {
         assertEquals("Kafic je odbijen.", viewModel.state.value.message)
     }
 
-    /** An invalidated check-in carries a reason, so the hunter can be told why. */
     @Test
     fun `invalidating a check-in sends a reason along`() {
         val viewModel = AdminViewModel(repository)

@@ -14,10 +14,6 @@ import rs.coffeeconquest.app.ui.UiState
 import rs.coffeeconquest.app.ui.cafe
 import rs.coffeeconquest.app.ui.dataOrNull
 
-/**
- * Only the parts that stay in the JVM. Generating the code itself calls into
- * android.graphics, so refreshToken() is covered up to that line and no further.
- */
 class StaffQrViewModelTest {
 
     @get:Rule
@@ -36,7 +32,6 @@ class StaffQrViewModelTest {
         assertEquals("c1", viewModel.state.value.selectedCafeId)
     }
 
-    /** Reloading must not drag the user back to the first cafe. */
     @Test
     fun `a reload keeps the cafe the user picked`() {
         coEvery { repository.myCafes() } returns listOf(cafe("c1"), cafe("c2", "Bigmajstor"))

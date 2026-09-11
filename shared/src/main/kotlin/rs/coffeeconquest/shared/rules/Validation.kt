@@ -1,10 +1,5 @@
 package rs.coffeeconquest.shared.rules
 
-/**
- * Input rules: the app greys out the submit button with them, and checks them
- * again before writing. What a client must not be trusted with at all is
- * enforced in firebase/firestore.rules instead.
- */
 object Validation {
 
     val USERNAME_LENGTH = 3..24

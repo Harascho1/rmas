@@ -5,7 +5,6 @@ import rs.coffeeconquest.shared.dto.EarnedBadge
 import rs.coffeeconquest.shared.model.Badges
 import rs.coffeeconquest.shared.rules.Time
 
-/** Evaluates the badge catalogue after a check-in and awards what is newly earned. */
 class BadgeSource {
     suspend fun evaluateAfterCheckIn(
         userId: String,

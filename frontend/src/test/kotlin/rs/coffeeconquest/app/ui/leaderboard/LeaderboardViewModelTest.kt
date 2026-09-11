@@ -46,7 +46,6 @@ class LeaderboardViewModelTest {
         assertEquals("Nis", viewModel.state.value.city)
     }
 
-    /** The city is only sent when the user is actually looking at a city board. */
     @Test
     fun `the global scope asks for no city`() {
         val viewModel = LeaderboardViewModel(repository)

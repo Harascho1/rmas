@@ -27,9 +27,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.R
 import rs.coffeeconquest.app.ui.common.Avatar
 import rs.coffeeconquest.app.ui.common.EmptyBox
 import rs.coffeeconquest.app.ui.common.Pill
@@ -52,7 +54,7 @@ fun FeedScreen(
 
     LaunchedEffect(Unit) { viewModel.load() }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Sta se desava") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.feed_title)) }) }) { padding ->
         Column(Modifier
             .fillMaxSize()
             .padding(padding)) {
@@ -60,20 +62,20 @@ fun FeedScreen(
                 Tab(
                     selected = !state.followingOnly,
                     onClick = { viewModel.onScopeChange(false) },
-                    text = { Text("Svi") },
+                    text = { Text(stringResource(R.string.feed_tab_all)) },
                 )
                 Tab(
                     selected = state.followingOnly,
                     onClick = { viewModel.onScopeChange(true) },
-                    text = { Text("Koga pratim") },
+                    text = { Text(stringResource(R.string.feed_tab_following)) },
                 )
             }
 
             StateContent(state = state.items, onRetry = viewModel::load) { items ->
                 if (items.isEmpty()) {
                     EmptyBox(
-                        if (state.followingOnly) "Ljudi koje pratite jos nisu nista uradili."
-                        else "Feed je prazan - budite prvi koji ce osvojiti kafic.",
+                        if (state.followingOnly) stringResource(R.string.feed_empty_following)
+                        else stringResource(R.string.feed_empty_all),
                     )
                 } else {
                     LazyColumn(
@@ -123,7 +125,7 @@ private fun FeedRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                item.points?.let { Pill("+$it") }
+                item.points?.let { Pill(stringResource(R.string.feed_points_positive, it)) }
             }
 
             if (item.photoId != null) {
@@ -136,7 +138,7 @@ private fun FeedRow(
             if (item.type == FeedEventType.CHALLENGE_CREATED) {
                 Spacer(Modifier.height(8.dp))
                 Pill(
-                    "izazov",
+                    stringResource(R.string.feed_badge_challenge),
                     background = MaterialTheme.colorScheme.errorContainer,
                     foreground = MaterialTheme.colorScheme.onErrorContainer,
                 )

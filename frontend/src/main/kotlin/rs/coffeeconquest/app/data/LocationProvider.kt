@@ -42,7 +42,6 @@ class LocationProvider(private val context: Context) {
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
-    /** The providers this device has switched on right now, for messages to the user. */
     fun enabledSources(): List<LocationFix.Source> = buildList {
         if (isEnabled(LocationManager.GPS_PROVIDER)) add(LocationFix.Source.GPS)
         if (isEnabled(LocationManager.NETWORK_PROVIDER)) add(LocationFix.Source.NETWORK)
@@ -82,7 +81,6 @@ class LocationProvider(private val context: Context) {
                     )
                     listeners += listener
                 } catch (_: SecurityException) {
-                    // Permission was revoked between the check and the request.
                 }
             }
             if (listeners.isEmpty()) return lastKnown()
@@ -111,10 +109,8 @@ class LocationProvider(private val context: Context) {
                 try {
                     manager.getLastKnownLocation(provider)?.toFix(source)
                 } catch (_: SecurityException) {
-                    // Permission was revoked between the check and the read.
                     null
                 } catch (_: IllegalArgumentException) {
-                    // Device has no such provider.
                     null
                 }
             }
@@ -129,6 +125,6 @@ class LocationProvider(private val context: Context) {
     )
 
     companion object {
-        val DEFAULT = LatLon(44.8167, 20.4600)
+        val DEFAULT = LatLon(43.3209, 21.8958)
     }
 }
