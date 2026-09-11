@@ -74,6 +74,60 @@ class ProfileViewModelTest {
     }
 
     @Test
+    fun `every badge slot carries a requirement`() {
+        val viewModel = ProfileViewModel(repository)
+        viewModel.load("u1", ownProfile = true)
+
+        val board = viewModel.state.value.badgeBoard
+
+        assertTrue(board.all { it.requirement.isNotBlank() })
+        assertEquals(
+            Badges.find(Badges.EXPLORER_5)?.requirement,
+            board.first { it.code == Badges.EXPLORER_5 }.requirement,
+        )
+    }
+
+    @Test
+    fun `selecting a badge opens its slot, and null closes it`() {
+        val earned = Badges.FIRST_SIP
+        coEvery { repository.userStats(any()) } returns stats(badges = listOf(badge(earned)))
+        val viewModel = ProfileViewModel(repository)
+        viewModel.load("u1", ownProfile = true)
+
+        viewModel.selectBadge(earned)
+
+        val selected = viewModel.state.value.selectedBadge
+        assertEquals(earned, selected?.code)
+        assertTrue(selected!!.earned)
+
+        viewModel.selectBadge(null)
+        assertEquals(null, viewModel.state.value.selectedBadge)
+    }
+
+    @Test
+    fun `an unearned badge can be selected too`() {
+        val viewModel = ProfileViewModel(repository)
+        viewModel.load("u1", ownProfile = true)
+
+        viewModel.selectBadge(Badges.STREAK_30)
+
+        val selected = viewModel.state.value.selectedBadge
+        assertFalse(selected!!.earned)
+        assertEquals(null, selected.earnedAtEpochMs)
+        assertTrue(selected.requirement.isNotBlank())
+    }
+
+    @Test
+    fun `a code that is not in the catalogue selects nothing`() {
+        val viewModel = ProfileViewModel(repository)
+        viewModel.load("u1", ownProfile = true)
+
+        viewModel.selectBadge("NE_POSTOJI")
+
+        assertEquals(null, viewModel.state.value.selectedBadge)
+    }
+
+    @Test
     fun `following flips the state and reloads the profile`() {
         coEvery { repository.userStats("u2") } returns
             stats(profile = profile(id = "u2", username = "mina", isFollowedByMe = false))

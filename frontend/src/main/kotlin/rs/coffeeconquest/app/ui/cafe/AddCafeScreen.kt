@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -28,10 +31,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import rs.coffeeconquest.app.ui.map.OsmMap
 import rs.coffeeconquest.shared.dto.UserProfile
 import rs.coffeeconquest.shared.model.CafeAttributes
 import rs.coffeeconquest.shared.model.CafeType
@@ -145,15 +151,42 @@ fun AddCafeScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            OutlinedButton(onClick = viewModel::useCurrentLocation, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Filled.MyLocation, contentDescription = null)
-                Spacer(Modifier.height(0.dp))
+            Text("Lokacija", style = MaterialTheme.typography.titleSmall)
+            OsmMap(
+                center = state.mapCenter,
+                cafes = emptyList(),
+                showUserMarker = false,
+                onCafeClick = {},
+                pickedPoint = state.pin,
+                onMapTap = viewModel::onMapPick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(260.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedButton(onClick = viewModel::useCurrentLocation) {
+                    Icon(Icons.Filled.MyLocation, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Moja lokacija")
+                }
                 Text(
-                    "  Koordinate: ${state.latitude.format()} , ${state.longitude.format()}",
+                    "${state.latitude.format()} , ${state.longitude.format()}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
-                "Koordinate se uzimaju sa vase trenutne lokacije - stanite ispred kafica pa dodirnite dugme.",
+                if (state.resolvingAddress) {
+                    "Trazim adresu za izabranu tacku..."
+                } else {
+                    "Dodirnite mapu da postavite pin - adresa i grad se popunjavaju sami, " +
+                        "a sve sto sami upisete ostaje netaknuto."
+                },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -165,7 +198,9 @@ fun AddCafeScreen(
             Button(
                 onClick = viewModel::submit,
                 enabled = state.canSubmit,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
             ) {
                 Text(if (state.submitting) "Salje se..." else "Posalji")
             }

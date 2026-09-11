@@ -2,13 +2,16 @@ package rs.coffeeconquest.app.ui.cafe
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import rs.coffeeconquest.app.data.AddressLookup
 import rs.coffeeconquest.app.data.AppContainer
 import rs.coffeeconquest.app.data.CoffeeRepository
+import rs.coffeeconquest.app.data.LatLon
 import rs.coffeeconquest.app.data.LocationProvider
 import rs.coffeeconquest.app.data.firebase.userMessage
 import rs.coffeeconquest.shared.dto.CreateCafeRequest
@@ -22,29 +25,37 @@ data class AddCafeUiState(
     val description: String = "",
     val openingHours: String = "",
     val type: CafeType = CafeType.KAFIC,
-    /** Picked from the suggested vocabulary, so the map filter can find them again. */
     val attributes: List<String> = emptyList(),
     val tags: String = "",
     val latitude: Double = LocationProvider.DEFAULT.latitude,
     val longitude: Double = LocationProvider.DEFAULT.longitude,
+    val mapCenter: LatLon = LocationProvider.DEFAULT,
+    val resolvingAddress: Boolean = false,
+    val addressTouched: Boolean = false,
+    val cityTouched: Boolean = false,
     val submitting: Boolean = false,
     val created: Boolean = false,
     val error: String? = null,
 ) {
+    val pin: LatLon get() = LatLon(latitude, longitude)
+
     val canSubmit: Boolean get() = !submitting && Validation.cafeName(name) == null
 }
 
 class AddCafeViewModel(
     private val repository: CoffeeRepository = AppContainer.repository,
     private val location: LocationProvider = AppContainer.location,
+    private val addresses: AddressLookup = AppContainer.addresses,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddCafeUiState())
     val state: StateFlow<AddCafeUiState> = _state.asStateFlow()
 
     fun onNameChange(value: String) = _state.update { it.copy(name = value, error = null) }
-    fun onAddressChange(value: String) = _state.update { it.copy(address = value) }
-    fun onCityChange(value: String) = _state.update { it.copy(city = value) }
+    fun onAddressChange(value: String) =
+        _state.update { it.copy(address = value, addressTouched = true) }
+
+    fun onCityChange(value: String) = _state.update { it.copy(city = value, cityTouched = true) }
     fun onDescriptionChange(value: String) = _state.update { it.copy(description = value) }
     fun onOpeningHoursChange(value: String) = _state.update { it.copy(openingHours = value) }
     fun onTagsChange(value: String) = _state.update { it.copy(tags = value) }
@@ -62,7 +73,48 @@ class AddCafeViewModel(
             if (fix == null) {
                 _state.update { it.copy(error = "Lokacija nije dostupna - proverite dozvolu i GPS.") }
             } else {
-                _state.update { it.copy(latitude = fix.latitude, longitude = fix.longitude, error = null) }
+                _state.update {
+                    it.copy(
+                        latitude = fix.latitude,
+                        longitude = fix.longitude,
+                        mapCenter = fix.position,
+                        error = null,
+                    )
+                }
+                resolveAddress(fix.position)
+            }
+        }
+    }
+
+    fun onMapPick(point: LatLon) {
+        _state.update {
+            it.copy(
+                latitude = point.latitude,
+                longitude = point.longitude,
+                error = null
+            )
+        }
+        resolveAddress(point)
+    }
+
+    private var addressJob: Job? = null
+
+    private fun resolveAddress(point: LatLon) {
+        addressJob?.cancel()
+        addressJob = viewModelScope.launch {
+            _state.update { it.copy(resolvingAddress = true) }
+            val resolved = runCatching { addresses.reverse(point) }.getOrNull()
+            _state.update { current ->
+                current.copy(
+                    resolvingAddress = false,
+                    address = if (current.addressTouched) {
+                        current.address
+                    } else {
+                        resolved?.street ?: current.address
+                    },
+                    city = if (current.cityTouched) current.city else resolved?.city
+                        ?: current.city,
+                )
             }
         }
     }

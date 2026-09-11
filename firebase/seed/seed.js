@@ -1,20 +1,3 @@
-/**
- * Seeds a Firebase project with the demo accounts and cafes.
- *
- * This is the replacement for the old backend's Seed.kt. It runs with the Admin
- * SDK, which bypasses the security rules on purpose - it is the one place that
- * is allowed to mint an ADMIN account, since the rules forbid the app from ever
- * granting a role to itself.
- *
- * Usage:
- *   1. Firebase console -> Project settings -> Service accounts -> Generate new
- *      private key. Save it next to this file as serviceAccountKey.json.
- *   2. npm install
- *   3. npm run seed
- *
- * Running it twice is safe: existing accounts are reused, not duplicated.
- */
-
 const path = require('path');
 const admin = require('firebase-admin');
 
@@ -45,6 +28,11 @@ const USERS = [
   { username: 'marko',   displayName: 'Marko Markovic', role: 'HUNTER', city: 'Beograd' },
   { username: 'jelena',  displayName: 'Jelena Jovanic', role: 'HUNTER', city: 'Beograd' },
   { username: 'stefan',  displayName: 'Stefan Stefanovic', role: 'HUNTER', city: 'Novi Sad' },
+  // Nis: an owner with a cafe of their own, their waiter, and two local hunters.
+  { username: 'vlasniknis', displayName: 'Dragan Nikolic', role: 'OWNER',  city: 'Nis' },
+  { username: 'konobarnis', displayName: 'Milica Ilic',    role: 'STAFF',  city: 'Nis' },
+  { username: 'nikola',     displayName: 'Nikola Pavlovic', role: 'HUNTER', city: 'Nis' },
+  { username: 'tijana',     displayName: 'Tijana Ristic',   role: 'HUNTER', city: 'Nis' },
 ];
 
 const CAFES = [
@@ -109,6 +97,8 @@ const CAFES = [
     longitude: 21.8946,
     tags: ['centar', 'wifi'],
     openingHours: '08-23',
+    owner: 'vlasniknis',
+    staff: ['konobarnis'],
   },
   {
     name: 'Przionica Kazandzijsko Sokace',
@@ -205,8 +195,6 @@ async function upsertCafe(spec, uidByUsername) {
     cityLower: spec.city.toLowerCase(),
     latitude: spec.latitude,
     longitude: spec.longitude,
-    // Seeded cafes are already on the map; the pending queue is exercised by
-    // proposing a new one from the app.
     status: 'APPROVED',
     type: spec.type,
     openingHours: spec.openingHours,

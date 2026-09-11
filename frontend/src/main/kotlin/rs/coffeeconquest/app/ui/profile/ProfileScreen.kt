@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,9 +30,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -107,6 +110,7 @@ fun ProfileScreen(
                 ),
                 showFollowButton = false,
                 onFollowToggle = {},
+                onBadgeClick = viewModel::selectBadge,
                 onCafeClick = onCafeClick,
                 modifier = Modifier.padding(padding),
             )
@@ -162,6 +166,7 @@ fun UserProfileScreen(
                 ),
                 showFollowButton = true,
                 onFollowToggle = viewModel::toggleFollow,
+                onBadgeClick = viewModel::selectBadge,
                 onCafeClick = onCafeClick,
                 modifier = Modifier.padding(padding),
             )
@@ -176,10 +181,15 @@ private fun ProfileBody(
     avatar: ImageBitmap?,
     showFollowButton: Boolean,
     onFollowToggle: () -> Unit,
+    onBadgeClick: (String?) -> Unit,
     onCafeClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val profile = stats.profile
+
+    state.selectedBadge?.let { badge ->
+        BadgeDialog(badge = badge, onDismiss = { onBadgeClick(null) })
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -276,7 +286,11 @@ private fun ProfileBody(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onBadgeClick(badge.code) }
                                 .width(76.dp)
+                                .padding(vertical = 4.dp)
+                                // A locked badge is dimmed, but still opens its card.
                                 .alpha(if (badge.earned) 1f else 0.32f),
                         ) {
                             Box(
@@ -366,6 +380,57 @@ private fun ProfileBody(
             }
         }
     }
+}
+
+/**
+ * The small card behind every badge: what it is, and - the point of it - exactly
+ * what is left to do when it has not been earned yet.
+ */
+@Composable
+private fun BadgeDialog(badge: BadgeSlot, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Text(badge.emoji, style = MaterialTheme.typography.displaySmall) },
+        title = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(badge.title, style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(4.dp))
+                if (badge.earnedAtEpochMs != null) {
+                    Pill("Osvojen ${formatDay(badge.earnedAtEpochMs)}")
+                } else {
+                    Pill("Jos nije osvojen")
+                }
+            }
+        },
+        text = {
+            Column {
+                Text(
+                    "Kako se osvaja",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(badge.requirement, style = MaterialTheme.typography.bodyMedium)
+
+                if (badge.earned) {
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider()
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        badge.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Zatvori") }
+        },
+    )
 }
 
 @Composable

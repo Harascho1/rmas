@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.view.MotionEvent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -14,17 +15,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.createBitmap
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import rs.coffeeconquest.app.data.LatLon
 import rs.coffeeconquest.shared.dto.Cafe
 
-/**
- * OpenStreetMap via osmdroid: no API key, no billing account, and custom pins are
- * plain Android drawables - which is exactly what a student project needs.
- */
 @Composable
 fun OsmMap(
     center: LatLon,
@@ -32,8 +31,12 @@ fun OsmMap(
     showUserMarker: Boolean,
     onCafeClick: (Cafe) -> Unit,
     modifier: Modifier = Modifier,
+    pickedPoint: LatLon? = null,
+    onMapTap: ((LatLon) -> Unit)? = null,
 ) {
     val context = LocalContext.current
+
+    val centred = remember { MapAnchor() }
 
     val mapView = remember {
         Configuration.getInstance().apply {
@@ -45,6 +48,17 @@ fun OsmMap(
             setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
             controller.setZoom(15.0)
+            // Inside a scrolling form the parent would otherwise swallow every pan.
+            setOnTouchListener { view, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN ->
+                        view.parent?.requestDisallowInterceptTouchEvent(true)
+
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                        view.parent?.requestDisallowInterceptTouchEvent(false)
+                }
+                false
+            }
         }
     }
 
@@ -60,8 +74,15 @@ fun OsmMap(
         factory = { mapView },
         modifier = modifier,
         update = { view ->
-            view.controller.setCenter(GeoPoint(center.latitude, center.longitude))
+            if (centred.point != center) {
+                view.controller.setCenter(GeoPoint(center.latitude, center.longitude))
+                centred.point = center
+            }
             view.overlays.clear()
+
+            if (onMapTap != null) {
+                view.overlays.add(MapEventsOverlay(tapReceiver(onMapTap)))
+            }
 
             if (showUserMarker) {
                 view.overlays.add(
@@ -93,9 +114,61 @@ fun OsmMap(
                     },
                 )
             }
+
+            if (pickedPoint != null) {
+                view.overlays.add(
+                    Marker(view).apply {
+                        position = GeoPoint(pickedPoint.latitude, pickedPoint.longitude)
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                        icon = targetPinDrawable(view.context)
+                        title = "Ovde ide kafic"
+                    },
+                )
+            }
             view.invalidate()
         },
     )
+}
+
+private class MapAnchor(var point: LatLon? = null)
+
+private fun tapReceiver(onTap: (LatLon) -> Unit) = object : MapEventsReceiver {
+    override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
+        val point = p ?: return false
+        onTap(LatLon(point.latitude, point.longitude))
+        return true
+    }
+
+    override fun longPressHelper(p: GeoPoint?): Boolean = false
+}
+
+private fun targetPinDrawable(context: Context): Drawable {
+    val density = context.resources.displayMetrics.density
+    val width = (26 * density).toInt()
+    val height = (34 * density).toInt()
+    val bitmap = createBitmap(width, height)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    val body = Color.parseColor("#2E7D5B")
+
+    paint.color = Color.WHITE
+    canvas.drawCircle(width / 2f, width / 2f, width / 2f, paint)
+
+    paint.color = body
+    val path = android.graphics.Path().apply {
+        moveTo(width / 2f - 5 * density, width * 0.8f)
+        lineTo(width / 2f + 5 * density, width * 0.8f)
+        lineTo(width / 2f, height.toFloat())
+        close()
+    }
+    canvas.drawPath(path, paint)
+
+    paint.style = Paint.Style.STROKE
+    paint.strokeWidth = 3 * density
+    canvas.drawCircle(width / 2f, width / 2f, width / 2f - 2 * density, paint)
+    canvas.drawCircle(width / 2f, width / 2f, 2.5f * density, paint)
+
+    return BitmapDrawable(context.resources, bitmap)
 }
 
 private fun dotDrawable(context: Context, color: Int): Drawable {
@@ -130,7 +203,6 @@ private fun pinDrawable(context: Context, conquered: Boolean, boosted: Boolean):
     paint.color = body
     canvas.drawCircle(width / 2f, width / 2f, width / 2f - 2 * density, paint)
 
-    // The stem, drawn as a triangle down to the anchor point.
     val path = android.graphics.Path().apply {
         moveTo(width / 2f - 5 * density, width * 0.8f)
         lineTo(width / 2f + 5 * density, width * 0.8f)

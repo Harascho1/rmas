@@ -17,6 +17,9 @@ object AppContainer {
     lateinit var location: LocationProvider
         private set
 
+    lateinit var addresses: AddressLookup
+        private set
+
     private var initialised = false
 
     fun init(context: Context) {
@@ -38,6 +41,7 @@ object AppContainer {
             admin = AdminSource(),
         )
         location = LocationProvider(appContext)
+        addresses = AddressLookup(appContext)
         initialised = true
     }
 }

@@ -22,7 +22,11 @@ data class ProfileUiState(
     val history: List<CheckIn> = emptyList(),
     val followBusy: Boolean = false,
     val message: String? = null,
+    val selectedBadgeCode: String? = null,
 ) {
+    val selectedBadge: BadgeSlot?
+        get() = selectedBadgeCode?.let { code -> badgeBoard.firstOrNull { it.code == code } }
+
     val badgeBoard: List<BadgeSlot>
         get() {
             val earned = (stats as? UiState.Ready)?.data?.badges?.associateBy { it.code }.orEmpty()
@@ -31,6 +35,7 @@ data class ProfileUiState(
                     code = definition.code,
                     title = definition.title,
                     description = definition.description,
+                    requirement = definition.requirement,
                     emoji = definition.emoji,
                     earnedAtEpochMs = earned[definition.code]?.earnedAtEpochMs,
                 )
@@ -42,6 +47,7 @@ data class BadgeSlot(
     val code: String,
     val title: String,
     val description: String,
+    val requirement: String,
     val emoji: String,
     val earnedAtEpochMs: Long?,
 ) {
@@ -91,6 +97,8 @@ class ProfileViewModel(
             )
         }
     }
+
+    fun selectBadge(code: String?) = _state.update { it.copy(selectedBadgeCode = code) }
 
     fun dismissMessage() = _state.update { it.copy(message = null) }
 }
