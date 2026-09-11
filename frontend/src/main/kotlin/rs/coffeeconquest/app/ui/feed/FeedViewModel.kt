@@ -3,9 +3,11 @@ package rs.coffeeconquest.app.ui.feed
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
@@ -29,7 +31,6 @@ class FeedViewModel : ViewModel() {
     private val photoStore = PhotoStore(repository, viewModelScope)
     val photos: StateFlow<Map<String, ImageBitmap>> = photoStore.photos
 
-    /** The UI reports which photo scrolled into view; fetching it is this ViewModel's job. */
     fun requestPhoto(photoId: String?) = photoStore.load(photoId)
 
     fun onScopeChange(followingOnly: Boolean) {
@@ -37,13 +38,17 @@ class FeedViewModel : ViewModel() {
         load()
     }
 
+    private var feedJob: Job? = null
+
     fun load() {
-        viewModelScope.launch {
-            _state.update { it.copy(items = UiState.Loading) }
-            runCatching { repository.feed(_state.value.followingOnly) }.fold(
-                onSuccess = { items -> _state.update { it.copy(items = UiState.Ready(items)) } },
-                onFailure = { error -> _state.update { it.copy(items = UiState.Error(error.userMessage())) } },
-            )
+        feedJob?.cancel()
+        _state.update { it.copy(items = UiState.Loading) }
+        feedJob = viewModelScope.launch {
+            repository.feedStream(_state.value.followingOnly)
+                .catch { error ->
+                    _state.update { it.copy(items = UiState.Error(error.userMessage())) }
+                }
+                .collect { items -> _state.update { it.copy(items = UiState.Ready(items)) } }
         }
     }
 }

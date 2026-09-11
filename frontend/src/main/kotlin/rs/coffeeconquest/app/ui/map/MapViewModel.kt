@@ -3,9 +3,11 @@ package rs.coffeeconquest.app.ui.map
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rs.coffeeconquest.app.data.AppContainer
@@ -23,7 +25,6 @@ data class MapUiState(
     val cafes: UiState<List<Cafe>> = UiState.Loading,
     val center: LatLon = LocationProvider.DEFAULT,
     val hasFix: Boolean = false,
-    /** Which provider gave us the fix - shown so the user knows how precise it is. */
     val fixSource: LocationFix.Source? = null,
     val fixAccuracyMeters: Float? = null,
     val filter: CafeFilter = CafeFilter(),
@@ -71,26 +72,23 @@ class MapViewModel : ViewModel() {
         }
     }
 
+    private var cafesJob: Job? = null
+
     fun load() {
-        viewModelScope.launch {
-            _state.update { it.copy(cafes = UiState.Loading) }
-            val current = _state.value
-            val result = runCatching {
-                repository.cafes(
-                    latitude = current.center.latitude,
-                    longitude = current.center.longitude,
-                    radiusMeters = current.radiusMeters,
-                    filter = current.filter,
-                )
-            }
-            _state.update {
-                it.copy(
-                    cafes = result.fold(
-                        onSuccess = { cafes -> UiState.Ready(cafes) },
-                        onFailure = { error -> UiState.Error(error.userMessage()) },
-                    ),
-                )
-            }
+        cafesJob?.cancel()
+        _state.update { it.copy(cafes = UiState.Loading) }
+        val current = _state.value
+        cafesJob = viewModelScope.launch {
+            repository.cafesStream(
+                latitude = current.center.latitude,
+                longitude = current.center.longitude,
+                radiusMeters = current.radiusMeters,
+                filter = current.filter,
+            )
+                .catch { error ->
+                    _state.update { it.copy(cafes = UiState.Error(error.userMessage())) }
+                }
+                .collect { cafes -> _state.update { it.copy(cafes = UiState.Ready(cafes)) } }
         }
     }
 

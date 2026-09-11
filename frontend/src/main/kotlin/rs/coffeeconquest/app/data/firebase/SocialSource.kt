@@ -4,6 +4,11 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import rs.coffeeconquest.shared.dto.CityChampion
 import rs.coffeeconquest.shared.dto.ConqueredCafe
@@ -186,29 +191,46 @@ class SocialSource {
         )
 
     suspend fun feed(followingOnly: Boolean, limit: Int): List<FeedItem> {
-        if (!followingOnly) {
-            return Fire.feed()
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .limit(limit.toLong())
-                .fetch()
-                .map { it.toFeedItem() }
-        }
+        if (!followingOnly) return newest(limit).fetch().map { it.toFeedItem() }
 
         val actorIds = friendIds(Fire.uid)
         if (actorIds.isEmpty()) return emptyList()
 
-        return actorIds.chunked(WHERE_IN_LIMIT)
-            .flatMap { chunk ->
-                Fire.feed()
-                    .whereIn("actorId", chunk)
-                    .orderBy("createdAt", Query.Direction.DESCENDING)
-                    .limit(limit.toLong())
-                    .fetch()
+        return byActors(actorIds, limit).flatMap { it.fetch() }.merge(limit)
+    }
+
+    fun feedFlow(followingOnly: Boolean, limit: Int): Flow<List<FeedItem>> {
+        if (!followingOnly) {
+            return newest(limit).snapshots().map { docs -> docs.map { it.toFeedItem() } }
+        }
+
+        return flow {
+            val actorIds = friendIds(Fire.uid)
+            if (actorIds.isEmpty()) {
+                emit(emptyList())
+                return@flow
             }
-            .map { it.toFeedItem() }
+            val streams = byActors(actorIds, limit).map { it.snapshots() }
+            emitAll(combine(streams) { parts -> parts.toList().flatten().merge(limit) })
+        }
+    }
+
+    private fun newest(limit: Int): Query = Fire.feed()
+        .orderBy("createdAt", Query.Direction.DESCENDING)
+        .limit(limit.toLong())
+
+    private fun byActors(actorIds: List<String>, limit: Int): List<Query> =
+        actorIds.chunked(WHERE_IN_LIMIT).map { chunk ->
+            Fire.feed()
+                .whereIn("actorId", chunk)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(limit.toLong())
+        }
+
+    private fun List<DocumentSnapshot>.merge(limit: Int): List<FeedItem> =
+        map { it.toFeedItem() }
             .sortedByDescending { it.createdAtEpochMs }
             .take(limit)
-    }
 
     suspend fun record(
         type: FeedEventType,

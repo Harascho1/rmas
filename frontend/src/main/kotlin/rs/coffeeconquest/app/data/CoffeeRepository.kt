@@ -1,6 +1,7 @@
 package rs.coffeeconquest.app.data
 
 import com.google.firebase.firestore.DocumentSnapshot
+import kotlinx.coroutines.flow.Flow
 import rs.coffeeconquest.app.data.firebase.AdminSource
 import rs.coffeeconquest.app.data.firebase.AppException
 import rs.coffeeconquest.app.data.firebase.AuthSource
@@ -79,6 +80,16 @@ class CoffeeRepository(
         limit: Int = 50,
     ): List<Cafe> = cafeSource.nearby(latitude, longitude, radiusMeters, filter, city, limit)
 
+    fun cafesStream(
+        latitude: Double? = null,
+        longitude: Double? = null,
+        radiusMeters: Double = 5_000.0,
+        filter: CafeFilter = CafeFilter(),
+        city: String? = null,
+        limit: Int = 50,
+    ): Flow<List<Cafe>> =
+        cafeSource.nearbyFlow(latitude, longitude, radiusMeters, filter, city, limit)
+
     suspend fun cafe(id: String, latitude: Double? = null, longitude: Double? = null): Cafe =
         cafeSource.byId(id, latitude, longitude)
 
@@ -141,6 +152,9 @@ class CoffeeRepository(
 
     suspend fun feed(followingOnly: Boolean, limit: Int = 30): List<FeedItem> =
         social.feed(followingOnly, limit)
+
+    fun feedStream(followingOnly: Boolean, limit: Int = 30): Flow<List<FeedItem>> =
+        social.feedFlow(followingOnly, limit)
 
     suspend fun user(id: String): UserProfile = social.user(id)
 

@@ -3,6 +3,8 @@ package rs.coffeeconquest.app.data.firebase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import rs.coffeeconquest.app.data.firebase.CafeSource.Companion.NO_SUCH_AUTHOR
 import rs.coffeeconquest.shared.dto.Cafe
@@ -30,6 +32,7 @@ class CafeSource(private val challenges: ChallengeSource) {
         private const val NO_SUCH_AUTHOR = "\u0000-no-such-author"
     }
 
+    /** One reading of what is around a point, for a caller that only wants it once. */
     suspend fun nearby(
         latitude: Double?,
         longitude: Double?,
@@ -38,35 +41,77 @@ class CafeSource(private val challenges: ChallengeSource) {
         city: String?,
         limit: Int,
     ): List<Cafe> {
+        val (query, box) = scope(latitude, longitude, radiusMeters, filter, city, limit)
+        return assemble(
+            query.fetch().inside(box),
+            latitude,
+            longitude,
+            radiusMeters,
+            filter,
+            city,
+            limit,
+        )
+    }
+
+    fun nearbyFlow(
+        latitude: Double?,
+        longitude: Double?,
+        radiusMeters: Double,
+        filter: CafeFilter,
+        city: String?,
+        limit: Int,
+    ): Flow<List<Cafe>> {
+        val (query, box) = scope(latitude, longitude, radiusMeters, filter, city, limit)
+        return query.snapshots().map { docs ->
+            assemble(docs.inside(box), latitude, longitude, radiusMeters, filter, city, limit)
+        }
+    }
+
+    private fun scope(
+        latitude: Double?,
+        longitude: Double?,
+        radiusMeters: Double,
+        filter: CafeFilter,
+        city: String?,
+        limit: Int,
+    ): Pair<Query, Geo.BoundingBox?> {
         val base = Fire.cafes().whereEqualTo("status", CafeStatus.APPROVED.name)
 
         // A narrowed search throws more away, so it has to start from a wider net.
         val fetchLimit = (limit * if (filter.isActive) 10L else 4L).coerceAtMost(MAX_FETCH)
 
-        val docs = when {
+        return when {
             latitude != null && longitude != null -> {
                 val box = Geo.boundingBox(latitude, longitude, radiusMeters)
                 base.whereGreaterThanOrEqualTo("latitude", box.minLat)
                     .whereLessThanOrEqualTo("latitude", box.maxLat)
-                    .limit(fetchLimit)
-                    .fetch()
-                    .filter { it.double("longitude") in box.minLon..box.maxLon }
+                    .limit(fetchLimit) to box
             }
 
-            !city.isNullOrBlank() -> base.whereEqualTo("cityLower", city.lowercase())
-                .limit(fetchLimit)
-                .fetch()
+            !city.isNullOrBlank() ->
+                base.whereEqualTo("cityLower", city.lowercase()).limit(fetchLimit) to null
 
-            else -> base.limit(fetchLimit).fetch()
+            else -> base.limit(fetchLimit) to null
         }
+    }
 
+    private fun List<DocumentSnapshot>.inside(box: Geo.BoundingBox?): List<DocumentSnapshot> =
+        if (box == null) this else filter { it.double("longitude") in box.minLon..box.maxLon }
+
+    private suspend fun assemble(
+        docs: List<DocumentSnapshot>,
+        latitude: Double?,
+        longitude: Double?,
+        radiusMeters: Double,
+        filter: CafeFilter,
+        city: String?,
+        limit: Int,
+    ): List<Cafe> {
         val needle = filter.query?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
         val authorId = resolveAuthorId(filter)
         val addedAfter = filter.addedWithinDays?.let { Time.daysAgoMs(it.toLong()) }
         val active = challenges.activeNow()
 
-        // "How many times have I been here" for every pin at once: the viewer's
-        // own conquest map is the mirror of the per-cafe visitor counters.
         val myVisits = Fire.uid?.let { uid ->
             Fire.conquered(uid).fetch().associate { it.id to it.int("visits") }
         } ?: emptyMap()
@@ -91,11 +136,8 @@ class CafeSource(private val challenges: ChallengeSource) {
                     CafeType.KAFIC
                 ) == filter.type
             }
-            // atributi - every requested tag must be present
             .filter { doc -> doc.strings("tags").containsAll(filter.attributes) }
-            // autor
             .filter { doc -> authorId == null || doc.str("proposedById") == authorId }
-            // datumi
             .filter { doc -> addedAfter == null || doc.long("createdAt") >= addedAfter }
             .map { doc ->
                 doc.toCafe(
@@ -115,12 +157,6 @@ class CafeSource(private val challenges: ChallengeSource) {
             .toList()
     }
 
-    /**
-     * Turns the author filter into a uid. "Only mine" is the signed-in user;
-     * otherwise the username is resolved through the same index login uses.
-     * An unknown username yields [NO_SUCH_AUTHOR], which matches nothing - the
-     * honest answer, rather than silently ignoring the filter.
-     */
     private suspend fun resolveAuthorId(filter: CafeFilter): String? {
         if (filter.onlyMine) return Fire.uid ?: NO_SUCH_AUTHOR
         val username = filter.authorUsername?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
@@ -139,10 +175,6 @@ class CafeSource(private val challenges: ChallengeSource) {
         )
     }
 
-    /**
-     * Hunters propose cafes (PENDING, an admin approves them); admins create them
-     * approved on the spot. An owner becomes the owner of what they create.
-     */
     suspend fun create(request: CreateCafeRequest, author: DocumentSnapshot): Cafe {
         Validation.cafeName(request.name)?.let { throw AppException(it) }
         if (!Geo.isValidCoordinate(request.latitude, request.longitude)) {
@@ -152,7 +184,6 @@ class CafeSource(private val challenges: ChallengeSource) {
         val role = author.enum("role", Role.HUNTER)
         val name = request.name.trim()
 
-        // Same guard the SQL version had: same name within ~50 m is the same cafe.
         val duplicate = Fire.cafes()
             .whereEqualTo("nameLower", name.lowercase())
             .fetch()
@@ -241,7 +272,6 @@ class CafeSource(private val challenges: ChallengeSource) {
             .fetch()
             .map { it.toCafe() }
 
-    /** Cafes an owner owns, a staff member works at, or - for an admin - all of them. */
     suspend fun managedBy(actor: DocumentSnapshot): List<Cafe> {
         val docs = when (actor.enum("role", Role.HUNTER)) {
             Role.OWNER -> Fire.cafes().whereEqualTo("ownerId", actor.id).fetch()
@@ -263,7 +293,6 @@ class CafeSource(private val challenges: ChallengeSource) {
         Fire.cafe(cafeId).update("staff", FieldValue.arrayUnion(userId)).await()
     }
 
-    /** Throws unless [actor] may manage this cafe. Mirrors the Firestore rules. */
     suspend fun assertCanManage(
         cafeId: String,
         actor: DocumentSnapshot,
@@ -289,10 +318,6 @@ class CafeSource(private val challenges: ChallengeSource) {
             .fetch()
             .map { it.toReview() }
 
-    /**
-     * One review per user per cafe: the document id is the author's uid, so
-     * posting again edits the existing review instead of adding a second one.
-     */
     suspend fun upsertReview(
         cafeId: String,
         author: DocumentSnapshot,
@@ -321,8 +346,6 @@ class CafeSource(private val challenges: ChallengeSource) {
             "ownerReplyAt" to existing.longOrNull("ownerReplyAt"),
         )
 
-        // The cafe carries its own rating counters, so reading a cafe never has
-        // to page through its reviews.
         Fire.db.batch().apply {
             set(reviewRef, payload)
             if (previousRating == null) {
@@ -374,7 +397,6 @@ class CafeSource(private val challenges: ChallengeSource) {
         val cafe = Fire.cafe(cafeId).fetch()
         if (!cafe.exists()) throw AppException("Kafic ne postoji.")
 
-        // One window of check-ins covers the 7-day, 30-day and per-day figures.
         val since = Time.daysAgoMs(30)
         val recent = Fire.checkIns()
             .whereEqualTo("cafeId", cafeId)
@@ -413,11 +435,6 @@ class CafeSource(private val challenges: ChallengeSource) {
 
     // -------------------------------------------------------------- visitors
 
-    /**
-     * The owner dashboard's top five, ranked from the per-cafe visitor counters.
-     * A single cafe can afford the query; the map reads the denormalised leader
-     * off the cafe document instead.
-     */
     suspend fun topVisitors(cafeId: String, limit: Int): List<CafeConqueror> =
         Fire.visitors(cafeId)
             .orderBy("visits", Query.Direction.DESCENDING)

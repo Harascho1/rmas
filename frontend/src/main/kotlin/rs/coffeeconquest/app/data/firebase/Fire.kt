@@ -6,6 +6,9 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 object Fire {
@@ -40,6 +43,16 @@ class AppException(message: String, cause: Throwable? = null) : Exception(messag
 // ------------------------------------------------------------------ helpers
 
 suspend fun Query.fetch(): List<DocumentSnapshot> = get().await().documents
+
+fun Query.snapshots(): Flow<List<DocumentSnapshot>> = callbackFlow {
+    val registration = addSnapshotListener { snapshot, error ->
+        when {
+            error != null -> close(error)
+            snapshot != null -> trySend(snapshot.documents)
+        }
+    }
+    awaitClose { registration.remove() }
+}
 
 suspend fun com.google.firebase.firestore.DocumentReference.fetch(): DocumentSnapshot =
     get().await()
